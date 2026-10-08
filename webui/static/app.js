@@ -69,6 +69,92 @@
   /** 设置元素文本（null → '–'） */
   function setText(el, text) { if (el) el.textContent = (text === null || text === undefined || text === '') ? '–' : String(text); }
 
+  /** 监听地址是不是「局域网开放」（不是本机回环就算开放） */
+  function isLanHost(host) {
+    if (host === null || host === undefined) return false;
+    var h = String(host).trim().toLowerCase();
+    if (h === '') return false;
+    return h !== '127.0.0.1' && h !== 'localhost' && h !== '::1' && h !== '[::1]';
+  }
+
+  /** URL 是不是只有本机能用（回环地址） */
+  function isLocalUrl(u) {
+    return /(^|\/\/)(127\.0\.0\.1|localhost|\[::1\])(:|\/|$)/i.test(String(u === null || u === undefined ? '' : u));
+  }
+
+  /* ------------------------------------------------------------------ *
+   * 复制到剪贴板（navigator.clipboard → execCommand 兜底）
+   * ------------------------------------------------------------------ */
+
+  /** execCommand 兜底：临时 textarea + 选中 + copy（老浏览器 / 非安全上下文） */
+  function fallbackCopy(text) {
+    try {
+      var ta = document.createElement('textarea');
+      ta.value = String(text);
+      ta.setAttribute('readonly', 'readonly');
+      ta.style.position = 'fixed';
+      ta.style.top = '-1000px';
+      ta.style.left = '-1000px';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.focus();
+      if (ta.select) ta.select();
+      if (ta.setSelectionRange) ta.setSelectionRange(0, ta.value.length);
+      var ok = !!(document.execCommand && document.execCommand('copy'));
+      if (ta.parentNode) ta.parentNode.removeChild(ta);
+      return ok;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  /** 按钮闪一下「已复制」，1.6s 后恢复原文案 */
+  function flashCopied(btn) {
+    if (!btn) return;
+    if (btn._copyLabel === undefined) btn._copyLabel = btn.textContent || '复制';
+    btn.textContent = '已复制';
+    if (btn.classList && btn.classList.add) btn.classList.add('copied');
+    if (btn._copyTimer) clearTimeout(btn._copyTimer);
+    btn._copyTimer = setTimeout(function () {
+      btn.textContent = btn._copyLabel;
+      if (btn.classList && btn.classList.remove) btn.classList.remove('copied');
+      btn._copyTimer = null;
+    }, 1600);
+  }
+
+  /**
+   * 复制文本。what 只用于提示文案（例如 ' API 地址'）。
+   * 两条路径：navigator.clipboard 可用 → 用它；失败 / 不可用 → execCommand 兜底。
+   */
+  function copyText(text, btn, what) {
+    var label = what || '内容';
+    if (text === null || text === undefined || text === '') {
+      toast('没有可复制的内容', 'error');
+      return;
+    }
+    text = String(text);
+    var ok = function () { flashCopied(btn); toast('已复制' + label, 'ok'); };
+    var bad = function (e) {
+      toast('复制失败（' + ((e && e.message) || '浏览器不允许剪贴板访问') + '），请手动选中后 Ctrl+C', 'error');
+    };
+    var clip = (typeof navigator !== 'undefined' && navigator) ? navigator.clipboard : null;
+    if (clip && typeof clip.writeText === 'function') {
+      try {
+        var p = clip.writeText(text);
+        if (p && typeof p.then === 'function') {
+          p.then(ok, function () { if (fallbackCopy(text)) ok(); else bad(); });
+        } else {
+          ok();   // 极简实现（测试桩）可能直接返回 undefined：当作成功
+        }
+        return;
+      } catch (e) {
+        if (fallbackCopy(text)) ok(); else bad(e);
+        return;
+      }
+    }
+    if (fallbackCopy(text)) ok(); else bad();
+  }
+
   /* ------------------------------------------------------------------ *
    * fetch 封装：统一错误 → 可读中文 Error
    * ------------------------------------------------------------------ */
@@ -134,14 +220,20 @@
     stDot: $('st-dot'), stState: $('st-state'), stPid: $('st-pid'), stUptime: $('st-uptime'),
     stModel: $('st-model'), stKv: $('st-kv'), stThinking: $('st-thinking'), stSpec: $('st-spec'),
     stSampling: $('st-sampling'), stGpu: $('st-gpu'), stEndpoint: $('st-endpoint'), stError: $('st-error'),
+    stApi: $('st-api'), btnCopyApi: $('btn-copy-api'), stListen: $('st-listen'),
     btnRefresh: $('btn-refresh'),
     // 控制区
     inPreset: $('in-preset'), presetDesc: $('preset-desc'), presetWarn: $('preset-warn'),
     inKvCapacity: $('in-kv-capacity'), inKvDtype: $('in-kv-dtype'), inSpec: $('in-spec'),
-    inPort: $('in-port'), inExtra: $('in-extra'),
+    inPort: $('in-port'), inExtra: $('in-extra'), inLan: $('in-lan'), lanWarn: $('lan-warn'),
     btnStart: $('btn-start'), btnStop: $('btn-stop'), btnRestart: $('btn-restart'), btnSave: $('btn-save'),
     actionNote: $('action-note'), actionPanel: $('action-panel'), actionOutput: $('action-output'),
     actionSummary: $('action-summary'), gpuList: $('gpu-list'), configPath: $('config-path'),
+    // 接入方式
+    accessPanel: $('access-panel'), accessWarning: $('access-warning'), accessError: $('access-error'),
+    accessUrls: $('access-urls'), accessWebuiUrls: $('access-webui-urls'),
+    accessSnippets: $('access-snippets'), accessNote: $('access-note'),
+    btnAccessRefresh: $('btn-access-refresh'),
     // 日志
     logView: $('log-view'), logFollow: $('log-follow'), logAutoscroll: $('log-autoscroll'),
     btnLogPause: $('btn-log-pause'), btnLogClear: $('btn-log-clear'), btnLogDownload: $('btn-log-download'),
@@ -161,7 +253,12 @@
     reqSortKey: null,      // 排序列
     reqSortDir: 0,         // 1=升序 -1=降序 0=服务端原序（新→旧）
     es: null,              // EventSource
-    emptyLogFallback: false
+    emptyLogFallback: false,
+    access: null,          // 最近一次 /api/access
+    apiUrls: [],           // 顶部展示的完整 API 地址
+    apiUrlsKey: '',        // 上次渲染的地址串（避免每 2s 重建 DOM）
+    cfgLan: null,          // config 里 HOST 是不是局域网（null = config 没写 HOST）
+    lanTouched: false      // 用户是否手动动过「局域网」复选框（动过就不再被刷新覆盖）
   };
 
   var ACTION_NOTE_IDLE = els.actionNote ? els.actionNote.textContent : '';
@@ -185,6 +282,26 @@
     if (!els.stDot) return;
     els.stDot.className = 'dot dot-' + cls;
     if (title) els.stDot.title = title;
+  }
+
+  /** 状态栏「监听」：本机 or 局域网开放（开放染橙色 + 写明无鉴权） */
+  function renderListenItem(s) {
+    if (!els.stListen) return;
+    var host = (s && s.host) ? String(s.host) : '';
+    var port = (s && s.port !== null && s.port !== undefined && s.port !== '') ? String(s.port) : '';
+    if (!host && !port) {
+      setText(els.stListen, null);
+      els.stListen.className = 'tb-v';
+      els.stListen.title = '后端没有返回监听地址';
+      return;
+    }
+    var lan = (s && s.lan_exposed === true) || isLanHost(host);
+    var hp = (host || '?') + (port ? ':' + port : '');
+    els.stListen.textContent = lan ? ('局域网 ' + hp + '（无鉴权）') : ('仅本机 ' + hp);
+    els.stListen.title = lan
+      ? '引擎监听在 ' + (host || '0.0.0.0') + '，同一网络里任何设备都能连（无鉴权、无 TLS）'
+      : '引擎只监听本机回环地址，其它设备连不上';
+    els.stListen.className = 'tb-v' + (lan ? ' lan-on' : '');
   }
 
   /** 渲染 /api/status 的结果 */
@@ -252,6 +369,12 @@
       setText(els.stEndpoint, null);
     }
 
+    // 「监听」：能不能被局域网里的其它设备连上（开放时染橙色）
+    renderListenItem(s);
+
+    // 完整 API 地址（/api/access 没回数据时用 /api/status 的）
+    renderApiChips();
+
     // 日志大小跟着状态一起刷新
     if (els.logSize && s.log_bytes !== undefined) els.logSize.textContent = fmtBytes(s.log_bytes);
     if (s.root && els.configPath && !els.configPath.textContent) {
@@ -280,6 +403,259 @@
       if (!document.hidden) await refreshStatus();
       scheduleStatus();
     }, delay);
+  }
+
+  /* ==================================================================== *
+   * A2. 完整 API 地址 + 接入方式面板（/api/access）
+   * ==================================================================== */
+
+  // 顶部/面板要展示的完整 API 地址：优先 /api/access，其次 /api/status
+  function currentApiUrls() {
+    var a = state.access;
+    if (a && a.engine && Array.isArray(a.engine.urls) && a.engine.urls.length) {
+      return a.engine.urls.filter(function (u) { return !!u; }).map(String);
+    }
+    var s = state.status;
+    if (s) {
+      if (Array.isArray(s.urls) && s.urls.length) return s.urls.filter(function (u) { return !!u; }).map(String);
+      if (s.api_base) return [String(s.api_base)];
+    }
+    return [];
+  }
+
+  /** 顶部状态栏：把所有完整 API 地址列出来（局域网地址用橙色 chip） */
+  function renderApiChips() {
+    var urls = currentApiUrls();
+    state.apiUrls = urls;
+    var key = urls.join('\n');
+    if (key === state.apiUrlsKey) return;
+    state.apiUrlsKey = key;
+    var box = els.stApi;
+    if (!box) return;
+    box.textContent = '';
+    if (!urls.length) {
+      var s = document.createElement('span');
+      s.className = 'dim';
+      s.textContent = '（后端没有返回 API 地址）';
+      box.appendChild(s);
+      return;
+    }
+    urls.forEach(function (u) {
+      var c = document.createElement('span');
+      c.className = 'api-chip' + (isLocalUrl(u) ? '' : ' api-chip-lan');
+      c.textContent = u;
+      c.title = isLocalUrl(u) ? '仅本机可用' : '局域网地址：同网络的笔记本 / 手机用这个';
+      box.appendChild(c);
+    });
+  }
+
+  /** 一行「地址 + 标签 + 复制按钮」 */
+  function makeUrlRow(url, tag, cls) {
+    var row = document.createElement('div');
+    row.className = 'url-row' + (cls ? ' ' + cls : '');
+    var txt = document.createElement('span');
+    txt.className = 'url-text mono';
+    txt.textContent = String(url);
+    row.appendChild(txt);
+    if (tag) {
+      var t = document.createElement('span');
+      t.className = 'url-tag';
+      t.textContent = tag;
+      row.appendChild(t);
+    }
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'btn btn-mini btn-copy';
+    b.textContent = '复制';
+    b.title = '复制这条地址';
+    b.addEventListener('click', function () { copyText(url, b, ' API 地址'); });
+    row.appendChild(b);
+    return row;
+  }
+
+  /** 填充一组地址；空列表显示中文说明（不显示 undefined） */
+  function fillUrlList(box, urls, metaFn, emptyMsg) {
+    if (!box) return;
+    box.textContent = '';
+    if (!urls || !urls.length) {
+      var e = document.createElement('span');
+      e.className = 'dim';
+      e.textContent = emptyMsg || '（没有地址）';
+      box.appendChild(e);
+      return;
+    }
+    urls.forEach(function (u) {
+      var m = (typeof metaFn === 'function' ? metaFn(u) : null) || {};
+      box.appendChild(makeUrlRow(u, m.tag, m.cls));
+    });
+  }
+
+  // 片段顺序 + 中文标题（后端 key → 人话）
+  var SNIPPET_TITLES = {
+    curl: '命令行 curl',
+    python_openai: 'Python（openai 库）',
+    python_requests: 'Python（requests 库）',
+    env: '环境变量（Linux / macOS）'
+  };
+  var SNIPPET_ORDER = ['curl', 'python_openai', 'python_requests', 'env'];
+
+  function snippetBlock(title, code) {
+    var wrap = document.createElement('div');
+    wrap.className = 'snippet';
+    var head = document.createElement('div');
+    head.className = 'snippet-head';
+    var t = document.createElement('span');
+    t.className = 'snippet-title';
+    t.textContent = title;
+    head.appendChild(t);
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'btn btn-mini btn-copy';
+    b.textContent = '复制';
+    b.title = '复制这段代码';
+    // textContent 写入 + <pre>：\n 和 \\ 原样保留格式
+    var pre = document.createElement('pre');
+    pre.className = 'snippet-code';
+    pre.textContent = code;
+    b.addEventListener('click', function () { copyText(code, b, '代码片段'); });
+    head.appendChild(b);
+    wrap.appendChild(head);
+    wrap.appendChild(pre);
+    return wrap;
+  }
+
+  /** 渲染 snippets（缺字段就跳过，绝不显示 undefined） */
+  function renderSnippets(sn) {
+    var box = els.accessSnippets;
+    if (!box) return;
+    box.textContent = '';
+    sn = (sn && typeof sn === 'object') ? sn : {};
+    var shown = 0;
+    SNIPPET_ORDER.forEach(function (key) {
+      var code = sn[key];
+      if (typeof code !== 'string' || code === '') return;
+      box.appendChild(snippetBlock(SNIPPET_TITLES[key] || key, code));
+      shown++;
+    });
+    // 后端以后加了新 key：也照实显示，标题用 key 本身
+    Object.keys(sn).forEach(function (key) {
+      if (SNIPPET_ORDER.indexOf(key) >= 0) return;
+      var code = sn[key];
+      if (typeof code !== 'string' || code === '') return;
+      box.appendChild(snippetBlock(key, code));
+      shown++;
+    });
+    if (!shown) {
+      var e = document.createElement('span');
+      e.className = 'dim';
+      e.textContent = '（后端没有返回代码片段）';
+      box.appendChild(e);
+    }
+  }
+
+  /** 控制区复选框 → 橙色警告的显示 */
+  function renderLanWarn() {
+    if (!els.lanWarn) return;
+    els.lanWarn.hidden = !(els.inLan && els.inLan.checked);
+  }
+
+  /** 实际运行状态（exposed / host）→ 复选框 + 警告；用户手动改过就不覆盖 */
+  function syncLanCheckbox(exposed, host) {
+    if (els.inLan && !state.lanTouched) {
+      // 取并集：config 里写了 0.0.0.0（下次启动会开）或引擎现在就开着，都算「已开启」。
+      // 两个来源都不写 127.0.0.1 覆盖对方，避免把用户的意图或真实状态显示错。
+      els.inLan.checked = (exposed === true) || isLanHost(host) || (state.cfgLan === true);
+    }
+    renderLanWarn();
+  }
+
+  /** /api/access 读取失败：中文错误，绝不白屏、绝不 undefined */
+  function renderAccessError(msg) {
+    if (els.accessError) { els.accessError.textContent = msg; els.accessError.hidden = false; }
+    if (els.accessWarning) { els.accessWarning.textContent = ''; els.accessWarning.hidden = true; }
+    if (els.accessUrls) {
+      fillUrlList(els.accessUrls, [], null, msg + '（顶部仍显示 /api/status 里的地址）');
+    }
+    if (els.accessWebuiUrls) fillUrlList(els.accessWebuiUrls, [], null, '读取失败，暂时看不到本网页的地址');
+    if (els.accessSnippets) {
+      els.accessSnippets.textContent = '';
+      var e = document.createElement('span');
+      e.className = 'dim';
+      e.textContent = '代码片段读取失败，请点「重新读取」重试。';
+      els.accessSnippets.appendChild(e);
+    }
+    if (els.accessNote) { els.accessNote.textContent = ''; els.accessNote.hidden = true; }
+  }
+
+  /** 渲染 /api/access 的结果（每个字段都当可能缺失处理） */
+  function renderAccess(d) {
+    if (!d || typeof d !== 'object') { renderAccessError('/api/access 返回了意外的内容'); return; }
+    state.access = d;
+    var engine = (d.engine && typeof d.engine === 'object') ? d.engine : {};
+    var webui = (d.webui && typeof d.webui === 'object') ? d.webui : {};
+    var urls = (Array.isArray(engine.urls) ? engine.urls : []).filter(function (u) { return !!u; }).map(String);
+    var exposed = engine.exposed === true;
+    var warning = (typeof d.warning === 'string' && d.warning !== '') ? d.warning : null;
+
+    // 顶部完整 API 地址
+    renderApiChips();
+
+    // 安全警告条（warning 非 null 才显示；把 host / port 写进去）
+    if (els.accessWarning) {
+      if (warning) {
+        var hostTxt = (engine.host === null || engine.host === undefined || engine.host === '')
+          ? '0.0.0.0' : String(engine.host);
+        var portTxt = (engine.port === null || engine.port === undefined || engine.port === '')
+          ? '' : (':' + engine.port);
+        els.accessWarning.textContent = '⚠ 安全警告：' + warning +
+          '\n监听地址：' + hostTxt + portTxt + '（无鉴权 · 无 TLS，同网络任何人都能连）';
+        els.accessWarning.hidden = false;
+      } else {
+        els.accessWarning.textContent = '';
+        els.accessWarning.hidden = true;
+      }
+    }
+    if (els.accessError) { els.accessError.textContent = ''; els.accessError.hidden = true; }
+
+    // 引擎地址：本机 / 局域网分别标出来
+    fillUrlList(els.accessUrls, urls, function (u) {
+      return isLocalUrl(u)
+        ? { tag: '仅本机（这台台式机）', cls: 'url-local' }
+        : { tag: '← 同网络的笔记本 / 手机用这个', cls: 'url-lan' };
+    }, '（后端没有返回 API 地址：引擎可能没在运行，先点上面的「启动」）');
+
+    // 本网页地址
+    var wurls = (Array.isArray(webui.urls) ? webui.urls : []).filter(function (u) { return !!u; }).map(String);
+    fillUrlList(els.accessWebuiUrls, wurls, function () {
+      return { tag: '浏览器里打开这个网页', cls: 'url-webui' };
+    }, '（后端没有返回本网页的地址）');
+
+    renderSnippets(d.snippets);
+
+    if (els.accessNote) {
+      var note = (typeof d.note === 'string' && d.note !== '') ? d.note : '';
+      els.accessNote.textContent = note;
+      els.accessNote.hidden = !note;
+    }
+
+    // 局域网开放时自动展开（有安全警告要看）
+    if (exposed && els.accessPanel) els.accessPanel.open = true;
+
+    syncLanCheckbox(exposed, engine.host);
+  }
+
+  async function loadAccess() {
+    try {
+      var d = await httpJson('/api/access');
+      renderAccess(d);
+      return d;
+    } catch (e) {
+      state.access = null;
+      state.apiUrlsKey = '';           // 让顶部退回 /api/status 的地址
+      renderApiChips();
+      renderAccessError('接入信息读取失败：' + e.message);
+      return null;
+    }
   }
 
   /* ==================================================================== *
@@ -380,6 +756,25 @@
       fill(els.inKvDtype, 'KV_DTYPE');
       fill(els.inSpec, 'SPEC_FLAGS');
       fill(els.inExtra, 'EXTRA_FLAGS');
+
+      // HOST 是复选框（不是文本框）：有 HOST 就用它预填，没有则默认「仅本机」
+      var hostVal = v['HOST'];
+      if (hostVal !== undefined && hostVal !== null && String(hostVal).trim() !== '') {
+        state.cfgLan = isLanHost(hostVal);
+        if (els.inLan && !state.lanTouched) {
+          els.inLan.checked = state.cfgLan;
+          els.inLan.title = 'HOST 来自 ' + ((d && d.path) || 'config/runtime.env') + '：' + hostVal;
+          renderLanWarn();
+        }
+      } else {
+        state.cfgLan = null;
+        if (els.inLan && !state.lanTouched) {
+          els.inLan.checked = false;
+          els.inLan.title = 'HOST 在 config 里没有设置，按默认仅本机（127.0.0.1）处理';
+          renderLanWarn();
+        }
+        defaulted.push('HOST');
+      }
 
       var note = '配置文件：' + ((d && d.path) || 'config/runtime.env');
       if (defaulted.length) note += '（其中 ' + defaulted.join('、') + ' 未设置，显示的是引擎默认值）';
@@ -497,6 +892,8 @@
       var v = (kv[1] === null || kv[1] === undefined) ? '' : String(kv[1]).trim();
       if (v !== '') body[kv[0]] = v;
     });
+    // 局域网开关：勾上 → --host 0.0.0.0；不勾 → 明确收回 127.0.0.1
+    body.host = (els.inLan && els.inLan.checked) ? '0.0.0.0' : '127.0.0.1';
     return body;
   }
 
@@ -561,6 +958,7 @@
       state.actionRunning = false;
       setActionBusy(false, action);
       await refreshStatus();
+      await loadAccess();        // 启动 / 停止 / 重启会改变监听地址与局域网暴露状态
       await refreshRequests();
     }
   }
@@ -608,6 +1006,7 @@
   async function saveConfig() {
     if (state.actionRunning) { toast('有操作正在进行，稍后再保存', 'error'); return; }
     var payload = {
+      HOST: (els.inLan && els.inLan.checked) ? '0.0.0.0' : '127.0.0.1',
       PORT: String(els.inPort.value || '').trim(),
       KV_CAPACITY: String(els.inKvCapacity.value || '').trim(),
       KV_DTYPE: String(els.inKvDtype.value || '').trim(),
@@ -1030,9 +1429,33 @@
     if (els.btnRefresh) {
       els.btnRefresh.addEventListener('click', async function () {
         await refreshStatus();
+        await loadAccess();
         await refreshRequests();
         await loadGpus();
         toast('已刷新', 'ok');
+      });
+    }
+
+    // 顶部「复制」：一次复制全部完整 API 地址（多地址换行分隔）
+    if (els.btnCopyApi) {
+      els.btnCopyApi.addEventListener('click', function () {
+        copyText(state.apiUrls.join('\n'), els.btnCopyApi, '全部 API 地址');
+      });
+    }
+
+    // 接入方式面板：重新读取
+    if (els.btnAccessRefresh) {
+      els.btnAccessRefresh.addEventListener('click', function () { loadAccess(); });
+    }
+
+    // 局域网开关：勾选状态决定 HOST（保存 / 启动 / 重启时生效）
+    if (els.inLan) {
+      els.inLan.addEventListener('change', function () {
+        state.lanTouched = true;
+        renderLanWarn();
+        toast(els.inLan.checked
+          ? '已勾选局域网访问：点「保存」写回 HOST=0.0.0.0，点「重启」后生效（无鉴权，慎用）'
+          : '已取消局域网访问：保存 / 重启后只监听 127.0.0.1，其它设备连不上');
       });
     }
 
@@ -1097,8 +1520,10 @@
 
   async function init() {
     bindEvents();
+    renderLanWarn();
 
-    // 并行拉三份静态数据（互不依赖）
+    // 并行拉三份静态数据（互不依赖）；loadConfig 必须先于 loadAccess，
+    // 否则「局域网」复选框会被两条来源抢着写（用户改过就都不写了）。
     await Promise.all([
       loadPresets().catch(function (e) { toast('预设加载异常：' + e.message, 'error'); }),
       loadConfig().catch(function (e) { toast('配置加载异常：' + e.message, 'error'); }),
@@ -1106,6 +1531,7 @@
     ]);
 
     await refreshStatus();
+    await loadAccess();          // 接入方式：完整 API 地址 / 代码片段 / 局域网警告
     await refreshRequests();
 
     // 日志：默认跟随实时流（SSE 会先补最近 200 行）

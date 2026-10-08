@@ -1,0 +1,34 @@
+# Docker 构建上下文排除项。
+#
+# 关键：models/ 是 9.5 GB 的权重，绝不能进构建上下文 ——
+# 既会让 docker build 卡在打包上传上，也会把镜像撑成 12 GB。
+# 模型通过 docker/run.sh 的 -v 挂载进去，或构建时用 --with-model。
+
+.git
+.gitignore
+.dockerignore
+
+models/
+*.ninfer
+
+logs/
+*.log
+serve.pid
+
+config/runtime.env
+
+.cache/
+dist/
+*.tar.zst
+*.tar.zst.sha256
+
+**/__pycache__/
+*.pyc
+*.pyo
+
+*.bak
+*.bak-*
+*.orig
+*.rej
+*.tmp
+*.part

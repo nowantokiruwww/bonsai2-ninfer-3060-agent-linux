@@ -14,10 +14,17 @@
 <body>
 
 <!-- ================= A. 顶部状态栏（常驻） ================= -->
-<header class="topbar" id="topbar">
+<header class="topbar">
   <div class="tb-group">
     <span class="dot dot-gray" id="st-dot" aria-hidden="true"></span>
     <span class="tb-state" id="st-state">正在读取状态…</span>
+  </div>
+
+  <!-- 完整 API 地址（不是只显示端口）：一眼可见 + 一键复制；多个地址全部列出 -->
+  <div class="tb-group tb-api">
+    <span class="tb-k">API</span>
+    <span class="api-list" id="st-api"><span class="dim">读取中…</span></span>
+    <button type="button" class="btn btn-mini btn-copy" id="btn-copy-api" title="复制全部 API 地址（多个地址用换行分隔）">复制</button>
   </div>
 
   <div class="tb-group"><span class="tb-k">pid</span><span class="tb-v" id="st-pid">–</span></div>
@@ -29,6 +36,8 @@
   <div class="tb-group"><span class="tb-k">采样</span><span class="tb-v" id="st-sampling">–</span></div>
   <div class="tb-group"><span class="tb-k">GPU</span><span class="tb-v" id="st-gpu">–</span></div>
   <div class="tb-group"><span class="tb-k">端点</span><span class="tb-v" id="st-endpoint">–</span></div>
+  <!-- 监听：局域网开放时染橙色并写明「无鉴权」 -->
+  <div class="tb-group"><span class="tb-k">监听</span><span class="tb-v" id="st-listen">–</span></div>
 
   <span class="tb-error" id="st-error" hidden></span>
 
@@ -38,7 +47,7 @@
 <main class="wrap">
 
   <!-- ================= B. 控制区 ================= -->
-  <section class="card" id="panel-control">
+  <section class="card">
     <h2 class="card-title">控制</h2>
 
     <div class="grid grid-2">
@@ -83,6 +92,23 @@
         <p class="hint">引擎监听端口（启动 / 重启时生效，保存时写回 <code>PORT</code>）。</p>
       </div>
 
+      <!-- 局域网开关：勾上 → HOST=0.0.0.0；不勾 → HOST=127.0.0.1 -->
+      <div class="field">
+        <label class="chk chk-lan" for="in-lan">
+          <input type="checkbox" id="in-lan">
+          <span>允许局域网访问（无鉴权，慎用）</span>
+        </label>
+        <p class="hint">
+          勾上：保存 / 启动 / 重启时把 <code>HOST</code> 设为 <code>0.0.0.0</code>，同一网络的
+          笔记本 / 手机就能连这台台式机算力；不勾：<code>HOST</code>=<code>127.0.0.1</code>，只有本机能连。
+        </p>
+        <p class="warn-box warn-lan" id="lan-warn" hidden>
+          ⚠ 局域网访问已开启，<b>点「保存」或「重启」后生效</b>。引擎没有鉴权、也没有 TLS，
+          同一网络里的任何人都能白用这张显卡，也能看到对话内容 —— 请只在自己信得过的网络里这么用，
+          用完取消勾选并点「重启」收回来。
+        </p>
+      </div>
+
       <div class="field">
         <label for="in-extra">额外参数</label>
         <input type="text" id="in-extra" class="mono" placeholder="--max-concurrency 1" autocomplete="off">
@@ -104,7 +130,7 @@
       <pre class="output" id="action-output"></pre>
     </details>
 
-    <details class="subpanel" id="gpu-panel" open>
+    <details class="subpanel" open>
       <summary>GPU（只读）</summary>
       <div id="gpu-list" class="gpu-list"><span class="dim">正在读取 /api/gpus …</span></div>
     </details>
@@ -112,8 +138,36 @@
     <p class="hint dim" id="config-path"></p>
   </section>
 
+  <!-- ================= B2. 接入方式（默认收起；局域网开放时自动展开看警告） ================= -->
+  <section class="card">
+    <details class="subpanel access-panel" id="access-panel">
+      <summary>接入方式 —— 完整 API 地址、复制即用的代码片段；让同网络的笔记本 / 手机用这台台式机算力</summary>
+
+      <div class="access-body">
+        <!-- 安全警告（warning 非 null 时才显示） -->
+        <p class="warn-box warn-lan" id="access-warning" hidden></p>
+        <!-- /api/access 读取失败时的中文提示 -->
+        <p class="warn-box" id="access-error" hidden></p>
+
+        <div class="access-head">
+          <h3>完整 API 地址</h3>
+          <button type="button" class="btn btn-mini" id="btn-access-refresh">重新读取</button>
+        </div>
+        <div class="url-list" id="access-urls"><span class="dim">正在读取 /api/access …</span></div>
+
+        <h3>这个网页本身的地址</h3>
+        <div class="url-list" id="access-webui-urls"><span class="dim">–</span></div>
+
+        <h3>复制即用的代码片段</h3>
+        <div class="snippets" id="access-snippets"><span class="dim">正在读取 /api/access …</span></div>
+
+        <p class="hint" id="access-note"></p>
+      </div>
+    </details>
+  </section>
+
   <!-- ================= C. 日志区 ================= -->
-  <section class="card" id="panel-logs">
+  <section class="card">
     <h2 class="card-title">
       日志 <span class="mono dim" id="log-path">logs/service.log</span>
       <span class="mono dim" id="log-size">–</span>
@@ -132,7 +186,7 @@
   </section>
 
   <!-- ================= D. 请求指标区 ================= -->
-  <section class="card" id="panel-requests">
+  <section class="card">
     <h2 class="card-title">
       请求指标 <span class="mono dim" id="req-bytes"></span>
       <button type="button" class="btn btn-mini right" id="btn-req-refresh">立即刷新</button>
@@ -164,7 +218,7 @@
   </section>
 
   <!-- ================= E. 参数速查（默认收起） ================= -->
-  <section class="card" id="panel-cheatsheet">
+  <section class="card">
     <details>
       <summary class="card-title as-summary">参数速查 / 踩过的坑（点击展开）</summary>
       <div class="doc">

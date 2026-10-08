@@ -138,3 +138,81 @@ load_runtime_env() {
   [ -n "${MODEL_PATH:-}" ] || MODEL_PATH="$MODEL_FILE"
   return 0
 }
+
+# ---------------------------------------------------------------------------
+# 网络地址
+#
+# ⚠ 引擎**没有鉴权** —— 这是上游的设计，本项目没有在外面加壳。
+#   所以默认只绑 127.0.0.1。要让笔记本连台式机的算力，必须显式开 --lan，
+#   并且要明白这意味着什么：**同一局域网里任何人都能白用你的显卡**，
+#   包括看你的请求内容（请求日志就落在 logs/request.jsonl）。
+#   要开放就开放，但不许悄悄开放 —— 所以暴露时 everywhere 都会打警告。
+#
+# 这里不猜 IP：直接问内核要全局作用域的 IPv4，跳过虚拟网卡。
+# ---------------------------------------------------------------------------
+lan_ips() {
+  if command -v ip >/dev/null 2>&1; then
+    ip -4 -o addr show scope global 2>/dev/null \
+      | awk '{ split($4, a, "/"); if ($2 !~ /^(docker|br-|veth|virbr|tun|tap)/) print $2, a[1] }'
+  elif command -v hostname >/dev/null 2>&1; then
+    local a
+    for a in $(hostname -I 2>/dev/null); do
+      case "$a" in 127.*|172.1[0-9].*|172.2[0-9].*|172.3[01].*|169.254.*) continue ;; esac
+      printf 'host %s\n' "$a"
+    done
+  fi
+}
+
+# 走默认路由的那张网卡的地址 —— 别的机器最可能连上的就是它
+primary_lan_ip() {
+  local p=""
+  if command -v ip >/dev/null 2>&1; then
+    p="$(ip route get 1.1.1.1 2>/dev/null \
+         | awk '{ for (i=1;i<=NF;i++) if ($i=="src") { print $(i+1); exit } }')"
+  fi
+  [ -n "$p" ] || p="$(lan_ips | awk 'NR==1{print $2}')"
+  printf '%s' "$p"
+}
+
+# 一个 bind 地址对外意味着哪些 URL
+#   127.0.0.1 / localhost  → 只有本机
+#   0.0.0.0                → 所有网卡，返回每条 LAN 地址
+#   具体 IP                → 就那一个
+#
+# BONSAI_ADVERTISE_IP：手动指定「对外该报哪个 IP」。
+#   在容器里必须要它 —— 容器只看得见自己那个网络命名空间的网卡（172.17.x.x），
+#   报出来的桥接地址对笔记本毫无用处；docker/run.sh 会把宿主机的真实局域网
+#   地址通过这个变量传进来。
+urls_for_bind() {
+  local host="$1" port="${2:-8098}"
+  case "$host" in
+    0.0.0.0|"::"|"*")
+      printf 'http://127.0.0.1:%s\n' "$port"
+      if [ -n "${BONSAI_ADVERTISE_IP:-}" ]; then
+        printf 'http://%s:%s\n' "$BONSAI_ADVERTISE_IP" "$port"
+        return 0
+      fi
+      local line
+      while IFS= read -r line; do
+        [ -n "$line" ] || continue
+        printf 'http://%s:%s\n' "$(printf '%s' "$line" | awk '{print $2}')" "$port"
+      done < <(lan_ips)
+      ;;
+    *)
+      printf 'http://%s:%s\n' "$host" "$port"
+      ;;
+  esac
+}
+
+# bind 在 0.0.0.0 上就是对外开放
+#
+# BONSAI_LAN_EXPOSED 可以推翻这个判断：容器里引擎必须绑 0.0.0.0（否则 docker 的
+#   -p 转发不进来），但宿主机到底把端口映射到 127.0.0.1 还是所有网卡，容器自己
+#   看不见 —— 这个变量就是宿主机把真相告诉容器的方式。docker/run.sh 会设它。
+is_lan_exposed() {
+  case "${BONSAI_LAN_EXPOSED:-}" in
+    1|true|yes) return 0 ;;
+    0|false|no) return 1 ;;
+  esac
+  case "${1:-}" in 0.0.0.0|"::"|"*") return 0 ;; *) return 1 ;; esac
+}

@@ -334,3 +334,104 @@ pre.output {
   .tb-refresh { margin-left: 0; }
   .logview { height: 260px; }
 }
+
+/* --------------------------------------------------------------------------
+   F. 完整 API 地址 / 局域网 / 接入方式（新增；只用现有 CSS 变量）
+   -------------------------------------------------------------------------- */
+
+/* 顶部状态栏：API 地址 chip 列表（多个地址全部列出，局域网地址橙色） */
+.tb-api { flex: 1 1 320px; min-width: 0; }
+.api-list {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  white-space: normal;
+}
+.api-chip {
+  font-family: var(--mono);
+  font-size: 12.5px;
+  color: var(--cyan);
+  background: rgba(57, 197, 207, .10);
+  border: 1px solid rgba(57, 197, 207, .32);
+  border-radius: 999px;
+  padding: 1px 8px;
+  cursor: text;
+  user-select: all;
+}
+.api-chip-lan {
+  color: #ffb86b;
+  background: rgba(219, 109, 40, .12);
+  border-color: rgba(219, 109, 40, .45);
+}
+
+/* 复制按钮反馈 */
+.btn-copy.copied {
+  background: #1d3222;
+  border-color: rgba(63, 185, 80, .55);
+  color: #c7f0cb;
+}
+
+/* 「监听」项：局域网开放时染橙色 */
+.lan-on { color: var(--orange) !important; }
+
+/* 控制区：局域网开关 + 橙色警告 */
+.chk-lan { font-size: 12.5px; color: var(--fg); }
+.warn-lan {
+  border-color: rgba(219, 109, 40, .55);
+  border-left-color: var(--orange);
+  background: rgba(219, 109, 40, .10);
+  color: #ffcf9e;
+  white-space: pre-line;   /* warning 里的 \n 换行要显示出来 */
+}
+
+/* 接入方式面板 */
+.access-panel { margin-top: 0; background: var(--bg-soft); }
+.access-body { padding: 10px 12px 12px; }
+.access-body h3 { margin: 14px 0 6px; font-size: 13.5px; color: var(--accent); }
+.access-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.access-head h3 { margin: 14px 0 6px; }
+#access-warning { margin: 0 0 10px; }
+#access-error { margin: 0 0 10px; border-color: rgba(248, 81, 73, .55); border-left-color: var(--red); background: rgba(248, 81, 73, .09); color: #ffb3ae; }
+
+/* 地址行 */
+.url-list { display: flex; flex-direction: column; gap: 6px; }
+.url-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 9px;
+  border: 1px solid var(--line-soft);
+  border-radius: 6px;
+  background: var(--bg-soft);
+}
+.url-text { font-size: 12.5px; color: var(--cyan); user-select: all; word-break: break-all; }
+.url-tag { font-size: 11px; color: var(--fg-dim); }
+.url-row > .btn-copy { margin-left: auto; }
+.url-row.url-lan { border-color: rgba(219, 109, 40, .40); background: rgba(219, 109, 40, .06); }
+.url-row.url-lan .url-text { color: #ffb86b; }
+.url-row.url-lan .url-tag { color: #e8a45f; }
+
+/* 代码片段：<pre> 等宽保留格式 */
+.snippets { display: flex; flex-direction: column; gap: 10px; }
+.snippet { border: 1px solid var(--line-soft); border-radius: 6px; background: var(--bg-inset); overflow: hidden; }
+.snippet-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--line-soft);
+}
+.snippet-title { font-size: 12.5px; color: var(--fg-dim); }
+pre.snippet-code {
+  margin: 0;
+  padding: 10px;
+  max-height: 260px;
+  overflow: auto;
+  font-size: 12px;
+  line-height: 1.5;
+  white-space: pre;       /* 保留换行与缩进，不自动折行 */
+  color: #c9d1d9;
+}
