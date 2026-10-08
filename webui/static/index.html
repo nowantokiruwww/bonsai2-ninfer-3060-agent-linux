@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ninfer-3060-bonsai · 控制台</title>
+<!--
+  纯静态前端：无框架、无 CDN、无构建步骤、无外部字体。
+  样式与脚本都在本地 static/ 下，离线可用。
+  后端：webui/server.py（同源，默认 http://127.0.0.1:8099）
+-->
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<!-- ================= A. 顶部状态栏（常驻） ================= -->
+<header class="topbar" id="topbar">
+  <div class="tb-group">
+    <span class="dot dot-gray" id="st-dot" aria-hidden="true"></span>
+    <span class="tb-state" id="st-state">正在读取状态…</span>
+  </div>
+
+  <div class="tb-group"><span class="tb-k">pid</span><span class="tb-v" id="st-pid">–</span></div>
+  <div class="tb-group"><span class="tb-k">uptime</span><span class="tb-v" id="st-uptime">–</span></div>
+  <div class="tb-group"><span class="tb-k">模型</span><span class="tb-v" id="st-model">–</span></div>
+  <div class="tb-group"><span class="tb-k">KV</span><span class="tb-v" id="st-kv">–</span></div>
+  <div class="tb-group"><span class="tb-k">思考</span><span class="tb-v" id="st-thinking">–</span></div>
+  <div class="tb-group"><span class="tb-k">投机</span><span class="tb-v" id="st-spec">–</span></div>
+  <div class="tb-group"><span class="tb-k">采样</span><span class="tb-v" id="st-sampling">–</span></div>
+  <div class="tb-group"><span class="tb-k">GPU</span><span class="tb-v" id="st-gpu">–</span></div>
+  <div class="tb-group"><span class="tb-k">端点</span><span class="tb-v" id="st-endpoint">–</span></div>
+
+  <span class="tb-error" id="st-error" hidden></span>
+
+  <button type="button" class="btn btn-ghost tb-refresh" id="btn-refresh" title="立即刷新状态 / 日志大小">刷新</button>
+</header>
+
+<main class="wrap">
+
+  <!-- ================= B. 控制区 ================= -->
+  <section class="card" id="panel-control">
+    <h2 class="card-title">控制</h2>
+
+    <div class="grid grid-2">
+      <div class="field">
+        <label for="in-preset">预设档位</label>
+        <select id="in-preset">
+          <option value="">（加载中…）</option>
+        </select>
+        <p class="hint" id="preset-desc">正在读取 /api/presets …</p>
+        <p class="warn-box" id="preset-warn" hidden>
+          ⚠ 危险档：<b>greedy</b> 会强制 argmax（temperature=0）。它和关闭思考的配置
+          （例如 <code>fast</code>，或任何 <code>--no-thinking</code>）组合时，模型没有随机逃逸通道，
+          会把同一条工具调用逐字节重复下去、永不自愈（实测连续 43 次）。生产配置绝不加它，仅用于复现问题。
+        </p>
+      </div>
+
+      <div class="field">
+        <label for="in-kv-capacity">KV 容量（ctx）</label>
+        <div class="row">
+          <input type="text" id="in-kv-capacity" inputmode="numeric" placeholder="49152" autocomplete="off">
+          <button type="button" class="btn btn-mini" data-kv-quick="49152" title="12 GiB 档位，桌面有占用也稳妥">49152=12G 稳妥</button>
+          <button type="button" class="btn btn-mini" data-kv-quick="76768" title="空卡实测上限；桌面一占用就会掉，谨慎">76768=空卡实测上限</button>
+        </div>
+        <p class="hint">必须实测：<code>rk2v4-e8</code> 在空卡上能到 76768，但桌面/浏览器一占显存就会掉下来，当前默认 49152。</p>
+      </div>
+
+      <div class="field">
+        <label for="in-kv-dtype">KV 量化</label>
+        <input type="text" id="in-kv-dtype" placeholder="rk2v4-e8" autocomplete="off">
+        <p class="hint">例如 <code>rk2v4-e8</code>；换量化会改变显存占用，需实测容量。</p>
+      </div>
+
+      <div class="field">
+        <label for="in-spec">投机参数</label>
+        <input type="text" id="in-spec" placeholder="--spec dflash2 --draft-tokens 7" autocomplete="off">
+        <p class="hint">decode 的 120–200 tok/s 全部来自投机被接受；清空即关闭投机（地板 ≈ 26 tok/s）。</p>
+      </div>
+
+      <div class="field">
+        <label for="in-port">端口</label>
+        <input type="text" id="in-port" inputmode="numeric" placeholder="8098" autocomplete="off">
+        <p class="hint">引擎监听端口（启动 / 重启时生效，保存时写回 <code>PORT</code>）。</p>
+      </div>
+
+      <div class="field">
+        <label for="in-extra">额外参数</label>
+        <input type="text" id="in-extra" class="mono" placeholder="--max-concurrency 1" autocomplete="off">
+        <p class="hint">原样追加到引擎命令行（保存时写回 <code>EXTRA_FLAGS</code>）。</p>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button type="button" class="btn btn-primary" id="btn-start">启动</button>
+      <button type="button" class="btn btn-danger" id="btn-stop">停止</button>
+      <button type="button" class="btn" id="btn-restart">重启</button>
+      <button type="button" class="btn" id="btn-save" title="只写 config/runtime.env，不重启引擎">保存到 config</button>
+      <span class="action-note" id="action-note">启动/重启是异步的：点下去要等约 30 秒权重加载，进度看下面的「操作输出」。</span>
+    </div>
+
+    <!-- 操作输出（折叠面板；启动/重启时自动展开） -->
+    <details class="subpanel" id="action-panel">
+      <summary>操作输出 <span class="mono dim" id="action-summary">（无）</span></summary>
+      <pre class="output" id="action-output"></pre>
+    </details>
+
+    <details class="subpanel" id="gpu-panel" open>
+      <summary>GPU（只读）</summary>
+      <div id="gpu-list" class="gpu-list"><span class="dim">正在读取 /api/gpus …</span></div>
+    </details>
+
+    <p class="hint dim" id="config-path"></p>
+  </section>
+
+  <!-- ================= C. 日志区 ================= -->
+  <section class="card" id="panel-logs">
+    <h2 class="card-title">
+      日志 <span class="mono dim" id="log-path">logs/service.log</span>
+      <span class="mono dim" id="log-size">–</span>
+    </h2>
+
+    <div class="toolbar">
+      <label class="chk"><input type="checkbox" id="log-follow" checked> 跟随实时流（SSE）</label>
+      <button type="button" class="btn btn-mini" id="btn-log-pause">暂停</button>
+      <label class="chk"><input type="checkbox" id="log-autoscroll" checked> 自动滚动</label>
+      <button type="button" class="btn btn-mini" id="btn-log-clear">清空</button>
+      <button type="button" class="btn btn-mini" id="btn-log-download">下载</button>
+      <span class="stream-state" id="log-stream-state"></span>
+    </div>
+
+    <div class="logview" id="log-view" tabindex="0" aria-label="服务日志"></div>
+  </section>
+
+  <!-- ================= D. 请求指标区 ================= -->
+  <section class="card" id="panel-requests">
+    <h2 class="card-title">
+      请求指标 <span class="mono dim" id="req-bytes"></span>
+      <button type="button" class="btn btn-mini right" id="btn-req-refresh">立即刷新</button>
+    </h2>
+
+    <p class="summary" id="req-summary">正在读取 /api/requests …</p>
+
+    <div class="tablewrap">
+      <table class="reqtable" id="req-table">
+        <thead>
+          <tr id="req-head">
+            <th data-sort="time" class="sortable">时间</th>
+            <th data-sort="request_id" class="sortable">req#</th>
+            <th data-sort="thinking" class="sortable">思考</th>
+            <th data-sort="context" class="sortable">上下文</th>
+            <th data-sort="completion_tokens" class="sortable">输出 tok</th>
+            <th data-sort="thinking_tokens" class="sortable">思考 tok</th>
+            <th data-sort="decode_tps" class="sortable">decode tok/s</th>
+            <th data-sort="accept_pct" class="sortable">投机接受率</th>
+            <th data-sort="ttft_s" class="sortable">TTFT</th>
+            <th data-sort="total_s" class="sortable">总耗时</th>
+            <th data-sort="finish_reason" class="sortable">finish_reason</th>
+          </tr>
+        </thead>
+        <tbody id="req-body"></tbody>
+      </table>
+    </div>
+    <p class="empty" id="req-empty" hidden>还没有请求记录 —— 引擎还没有被调用过</p>
+  </section>
+
+  <!-- ================= E. 参数速查（默认收起） ================= -->
+  <section class="card" id="panel-cheatsheet">
+    <details>
+      <summary class="card-title as-summary">参数速查 / 踩过的坑（点击展开）</summary>
+      <div class="doc">
+        <h3>速度的真相</h3>
+        <p>单流 decode 的地板 ≈ <b>26 tok/s</b>（7.99 GiB 权重每 token 读一遍 ≈ 显存带宽）。
+           120–200 tok/s 全部来自投机解码被接受。公式：<code>decode ≈ 地板 × (1 + 草稿数 × 接受率)</code>。</p>
+
+        <h3>中文散文</h3>
+        <p>中文散文在这张卡上只有约 <b>6% 接受率</b> → 约 26 tok/s，<b>关掉投机也是 26</b>。换任何服务端参数都没用。</p>
+
+        <h3>代码 / 工具调用</h3>
+        <p>代码/工具调用流量接受率 <b>52%</b> → 约 88 tok/s；老部署（<code>--no-thinking</code>）曾到 <b>95%</b> → 约 200 tok/s。</p>
+
+        <h3>思考预算是「收口」不是「提速」</h3>
+        <p>4096 会让每个请求烧满 4096 个思考 token，同一任务墙钟 <b>67.8s</b>；1024 是 <b>44.2s</b>。</p>
+
+        <h3><code>--greedy</code> + <code>--no-thinking</code> = 复读死循环</h3>
+        <p>argmax 没有随机逃逸，模型会逐字节重复同一个工具调用（实测连续 <b>43 次</b>）。</p>
+
+        <h3>KV 容量必须实测</h3>
+        <p><code>rk2v4-e8</code> 在空卡上到 <b>76768</b>，桌面占用一多就会掉；当前默认 <b>49152</b>。</p>
+
+        <h3>第一次启动要等 30–40 秒</h3>
+        <p>权重 7.99 GiB，就绪之前 <code>/v1/models</code> 返回 <b>503</b> 是正常的。</p>
+      </div>
+    </details>
+  </section>
+
+</main>
+
+<!-- 轻量提示（错误 / 成功） -->
+<div class="toasts" id="toasts"></div>
+
+<script src="/static/app.js"></script>
+</body>
+</html>

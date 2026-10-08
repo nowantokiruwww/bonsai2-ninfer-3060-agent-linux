@@ -1,0 +1,42 @@
+# ---- 运行载荷（体积大，由 ./scripts/fetch-runtime.sh 放进 runtime/）----
+runtime/
+
+# ---- 模型权重（9.5 GB，由 ./scripts/fetch-model.sh 放进 models/）----
+models/
+*.ninfer
+
+# ---- 运行期产物 ----
+# runtime.env 由 ./install.sh 在本机生成：含本机 GPU UUID 与绝对日志路径，
+# 每台机器都不一样，不能进版本库。模板见 ./install.sh 里生成它的那一段。
+config/runtime.env
+logs/
+*.log
+serve.pid
+
+# ---- 缓存与打包产物 ----
+.cache/
+dist/
+*.tar.zst
+*.tar.zst.sha256
+
+# ---- 备份与临时文件 ----
+*.bak
+*.bak-*
+*.orig
+*.rej
+*.tmp
+*.part
+*~
+*.swp
+.DS_Store
+
+# ---- Python ----
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# ---- 编辑器 ----
+.idea/
+.vscode/
