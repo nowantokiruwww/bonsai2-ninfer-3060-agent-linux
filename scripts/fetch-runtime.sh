@@ -138,8 +138,8 @@ do_auto() {
   local cands=(
     # 以下是**可选**的自动探测候选：找不到也能跑，用户用 --from 指定即可。
     "$HOME/bonsai-ninfer-3060"                                     # verify:allow-outside-path
-    "$ROOT/../bonsai2-ninfer-3060-agent-linux/dist/0.1.0/runtime"  # verify:allow-outside-path
-    "$HOME/.cache/ninfer-3060-bonsai/runtime"
+    "$ROOT/../bonsai2-ninfer-3060-agent-linux.retired/dist/0.1.0/runtime"  # verify:allow-outside-path
+    "$HOME/.cache/bonsai2-ninfer-3060-agent-linux/runtime"
   )
   for c in "${cands[@]}"; do
     if [ -x "$c/bin/ninfer-serve" ]; then

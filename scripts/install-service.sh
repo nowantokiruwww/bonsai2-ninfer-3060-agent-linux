@@ -19,7 +19,7 @@ ROOT="$(cd "$HERE/.." && pwd)"
 # shellcheck source=lib.sh
 . "$HERE/lib.sh"
 
-UNIT_NAME="ninfer-3060-bonsai.service"
+UNIT_NAME="bonsai2-ninfer-3060-agent-linux.service"
 UNIT_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/systemd/user"
 UNIT_PATH="$UNIT_DIR/$UNIT_NAME"
 
@@ -48,7 +48,7 @@ mkdir -p "$UNIT_DIR"
 # 注意：注释里不要用反引号，普通 heredoc 会对它做命令替换（踩过这个坑，病历 L25）。
 cat > "$UNIT_PATH" <<EOF
 [Unit]
-Description=ninfer-3060-bonsai (Ternary-Bonsai-2-27B on RTX 3060, sm_86)
+Description=bonsai2-ninfer-3060-agent-linux (Ternary-Bonsai-2-27B on RTX 3060, sm_86)
 Documentation=file://$ROOT/README.md
 After=network.target
 

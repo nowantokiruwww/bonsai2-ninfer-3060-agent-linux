@@ -42,7 +42,7 @@ if [ -z "$SRC" ]; then
   local cands=(
     "$ROOT/runtime"
     "$HOME/bonsai-ninfer-3060"                                     # verify:allow-outside-path
-    "$ROOT/../bonsai2-ninfer-3060-agent-linux/dist/0.1.0/runtime"  # verify:allow-outside-path
+    "$ROOT/../bonsai2-ninfer-3060-agent-linux.retired/dist/0.1.0/runtime"  # verify:allow-outside-path
   )
   for c in "${cands[@]}"; do
     if [ -x "$c/bin/ninfer-serve" ]; then SRC="$c"; break; fi
