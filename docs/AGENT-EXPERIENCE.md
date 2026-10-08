@@ -339,24 +339,29 @@ EXTRA_FLAGS="--max-concurrency 1 --greedy --default-thinking-budget 512 \
 用户要求"把 V100/llama.cpp-prism 的思考和采样参数照抄到 3060"。**照抄采样是对的，
 照抄"思考不限量"做不到**——两端在思考不限时都会零工具调用。详见 `PORTING-LEDGER.md` 的 **L27**。
 
-### 13.2 最终配置（`config/runtime.env:47,52`）
+### 13.2 最终配置（`config/runtime.env:22,29`）
 
 ```
 SPEC_FLAGS="--spec dflash2 --draft-tokens 7"
 EXTRA_FLAGS="--max-concurrency 1 --temperature 1.0 --top-p 0.95 --top-k 20 \
-             --default-reasoning-effort medium --default-thinking-budget 4096 \
-             --request-log-jsonl /home/nowantokiruwww/bonsai-ninfer-3060/logs/request.jsonl"
+             --default-reasoning-effort medium --default-thinking-budget 1024 \
+             --request-log-jsonl <仓库根>/logs/request.jsonl"
 ```
 
-配套 DSH 侧（`~/.dsh/profiles/web/cordis.patch.yml:92,99`）：`bonsai2-3060` 的
-`maxTokens` / `defaultMaxTokens` `8192 → 16384`。**需 DSH 重启 / 新会话才生效。**
+> ⚠ 思考预算是 **1024**，**不是 L27 当初选的 4096** —— L28 按「速度 / 产出 /
+> 复读稳健性」三项实测后改的，见 13.5。本节其余数字（矩阵、墙钟）都是**实测记录**，
+> 说的是"某档位测得多少"，不是"现在跑的是哪档"。
+
+若你也用 DSH 接这个服务，需要把这个模型的 `maxTokens` / `defaultMaxTokens`
+提到 `16384`（作者本机是 `~/.dsh/profiles/web/cordis.patch.yml:92,99`，
+路径只是举例，按你自己的 profile 改）。**需 DSH 重启 / 新会话才生效。**
 
 ### 13.3 V100 ↔ 3060 参数映射
 
 | V100 / llama.cpp-prism | 3060 / NInfer |
 |---|---|
 | `--reasoning-effort medium` | `--default-reasoning-effort medium` |
-| `--reasoning-budget -1`（默认不限） | **`--default-thinking-budget 4096`**（必须偏离） |
+| `--reasoning-budget -1`（默认不限） | **`--default-thinking-budget 1024`**（必须偏离；L27 时曾是 4096） |
 | `--temp 1.0 --top-p 0.95 --top-k 20` | `--temperature 1.0 --top-p 0.95 --top-k 20` |
 | `--spec-type draft-mtp --spec-draft-n-max 1` | `--spec dflash2 --draft-tokens 7`（**不可移植**） |
 | （无 `--seed`） | （不传 `--seed` = fresh per request） |
