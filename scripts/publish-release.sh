@@ -150,9 +150,14 @@ for f in "${FILES[@]}"; do
     SKIP=$((SKIP+1)); continue
   fi
   log "上传 $name（$(human_size "$(stat -c %s "$f")")）…"
+  # ⚠ 必须用 -T（流式），**不能**用 --data-binary @"$f"。
+  # --data-binary @file 会把整个文件读进内存：1.46 GiB 那卷实测直接
+  # `curl: option --data-binary: out of memory`（本机 46 GB 内存、38 GB 可用，
+  # 所以不是真没内存，是这个用法本身不适合大文件）。
+  # -T 流式上传 + -X POST 指定方法，body 不进内存。
   if curl -fL --progress-bar -X POST "${AUTH[@]}" \
         -H 'Content-Type: application/octet-stream' \
-        --data-binary @"$f" \
+        -T "$f" \
         "$UPLOAD/releases/$REL_ID/assets?name=$name"; then
     echo
     ok "上传完成：$name"
