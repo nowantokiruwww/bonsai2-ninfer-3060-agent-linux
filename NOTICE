@@ -1,0 +1,45 @@
+bonsai2-ninfer-3060-agent-linux
+Copyright 2026 (the project authors)
+
+本作品采用 Apache License 2.0 授权，全文见同目录 LICENSE。
+
+-------------------------------------------------------------------------------
+本仓库包含或依赖的第三方作品与其归属
+-------------------------------------------------------------------------------
+
+1) 推理引擎源码（本仓库不 vendor，仅记录 commit 与用法）
+   iamwavecut/ninfer-all
+   https://github.com/iamwavecut/ninfer-all
+   commit 796f985007775f4bc7cfde53804fa22e7d60dbf8
+   VERSION 0.12.0-rtx3090
+   许可：Apache License 2.0
+
+   本仓库构建出的 bin/ninfer-serve 等二进制即源自上述源码，未做任何源码改动
+   （见 patches/README.md：当前状态为"零改动"）。
+
+2) 模型权重（本仓库不包含权重本体，仅记录 sha256 与来源）
+   WaveCut/Ternary-Bonsai-2-27B-NInfer-v3
+   revision b85b33627b27b9757a5a094fc74785a53e99f8ee
+   sha256   cdc4810b0ff17c40d0f62cf214b6e0bcd08346e9eb05ca53371507037793c14a
+   bytes    9,520,051,456
+   许可：apache-2.0（以模型仓库声明为准）
+
+3) 第三方运行时库（随 runtime 包分发，非本仓库源码）
+   NVIDIA CUDA Runtime / cuBLAS / nvJitLink 等，见 config/toolchain.lock
+   许可：NVIDIA CUDA Toolkit End User License Agreement (EULA)
+   注意：这些库的再分发受 NVIDIA EULA 约束，使用者需自行确认合规。
+
+4) 参照与方法论引用（本仓库未复制其任何代码）
+   suanrongqieqiezi/ninfer-rtx30-bench
+   https://github.com/suanrongqieqiezi/ninfer-rtx30-bench
+   commit c2f882ba274af6d31e941e81b114300a1dc9a657
+   许可：仓库中无 LICENSE 文件（license = null）
+   本仓库仅在文档中引用其公开的性能口径与测试维度作为对照坐标，
+   其脚本一行未抄。若原作者认为引用方式不妥，请联系我们调整。
+
+-------------------------------------------------------------------------------
+说明
+-------------------------------------------------------------------------------
+- 本项目是一个"移植与调参的完整记录 + 可复现工具链"，
+  不是 ninfer 引擎或 Bonsai 模型的官方发布。
+- 关于引擎/模型的任何问题，请优先向上游项目反馈。
