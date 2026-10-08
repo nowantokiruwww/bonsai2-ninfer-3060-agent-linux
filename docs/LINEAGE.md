@@ -131,7 +131,7 @@ bonsai2-ninfer-3060-agent-linux            Linux 侧 · 本项目
 | 参数 | 位置 | 3060（本机） | 3080 / 3090 怎么改 |
 |---|---|---|---|
 | `NINFER_CUDA_ARCH` | `config/env.sh` | `86` | **不变**（同为 sm_86） |
-| GPU UUID | `config/env.sh` 的 `GPU_UUID_3060` | `GPU-de9cb363-…` | 换成自己卡的 `nvidia-smi -L` 里那串（**别用序号**） |
+| GPU UUID | `config/env.sh` 的 `GPU_UUID_3060` | `GPU-<UUID>` | 换成自己卡的 `nvidia-smi -L` 里那串（**别用序号**） |
 | `NINFER_JOBS` | `config/env.sh` | `6` | 按物理内存调；内存 <32GB 不要超过 6（bench 侧 `-j 24` 曾触发内核 BugCheck） |
 | device profile | `scripts/70-calibrate.sh` | 28 SM 标定结果 | **每张卡都必须重跑**（SM 数不同 → 调度表不同） |
 | KV `(dtype, capacity)` | `scripts/75-kv-gate.sh` | 门禁实测 | **必须重跑**（显存不同） |

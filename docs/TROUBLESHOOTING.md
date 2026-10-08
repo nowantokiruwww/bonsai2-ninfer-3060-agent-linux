@@ -39,7 +39,7 @@ engine | calibrating routes for nvidia-tesla-v100-sxm2-16gb-sm70 (80 SMs)
 nvidia-smi --query-gpu=index,uuid,name,compute_cap --format=csv
 
 # 写进 config/runtime.env
-GPU_UUID=GPU-de9cb363-62f6-d10e-9cd0-26d071ac1974
+GPU_UUID=GPU-<UUID>
 ```
 
 或者直接让 `launcher.sh` 自己挑：

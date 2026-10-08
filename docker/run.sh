@@ -125,13 +125,21 @@ detect_uuid() {
         END { if (u != "") print u }' \
     || true
 }
+# 只报型号，不报 UUID —— 终端输出经常被整段贴进 issue/聊天，
+# 而 UUID 是本机的硬件唯一标识。要核对具体哪张卡用 `nvidia-smi -L`。
+gpu_name_of_uuid() {
+  command -v nvidia-smi >/dev/null 2>&1 || return 0
+  nvidia-smi --query-gpu=uuid,name --format=csv,noheader,nounits 2>/dev/null \
+    | awk -F', *' -v u="$1" '$1==u {print $2; exit}'
+}
+
 UUID="$(detect_uuid || true)"
-[ -n "$UUID" ] || UUID="$(detect_uuid || true)"
 if [ -z "$UUID" ]; then
   warn "nvidia-smi 没给出 sm_86 的卡，让容器自己从 /proc/driver/nvidia 探测"
 else
   case "$UUID" in GPU-*) ;; *) die "GPU_UUID 必须是 GPU- 开头（拿到 '$UUID'）" ;; esac
-  log "锁卡 $UUID"
+  _name="$(gpu_name_of_uuid "$UUID")"
+  log "已锁定兼容卡：${_name:-未知型号}（UUID 已隐藏）"
 fi
 
 # ---------------------------------------------------------------------------

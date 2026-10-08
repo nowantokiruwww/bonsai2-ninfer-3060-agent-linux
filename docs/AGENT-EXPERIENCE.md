@@ -19,7 +19,7 @@
 | 模型 | `Ternary-Bonsai-2-27B-ninfer-v3.ninfer`，9,520,051,456 B，sha256 `cdc4810b…c14a`（容器头 `NINFER\x00\x03` = v3） |
 | CUDA | 项目自带 **13.1**（redist 13.1.0，18 组件逐件 sha256 校验；地板 12.8） |
 | 宿主编译器 | GCC 13.3.0 |
-| GPU | RTX 3060 12GB / sm_86 / **28 SM** / UUID `GPU-de9cb363-62f6-d10e-9cd0-26d071ac1974` |
+| GPU | RTX 3060 12GB / sm_86 / **28 SM** / UUID `GPU-<UUID>` |
 | 驱动 | 580.178.04（Secure Boot disabled） |
 | device profile | `profiles/device-profiles.json`：`hardware_class=nvidia-geforce-rtx-3060-sm86`、**`multiprocessors=28`**、`origin=ninfer-calibrate on NVIDIA GeForce RTX 3060`、**67 条 route** |
 | KV 设定 | `--kv-dtype rk2v4-e8`、`--kv-capacity 76768`（由 §4.2 门禁实测，**不是抄来的 24576**） |

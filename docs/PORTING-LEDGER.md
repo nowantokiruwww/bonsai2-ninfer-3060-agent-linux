@@ -995,7 +995,7 @@ command -v urls_for_bind >/dev/null 2>&1 \
 |---|---|
 | OS / 内核 | Ubuntu 24.04.4 LTS / 7.0.0-38-generic |
 | CPU / 内存 | AMD Ryzen 5 2600X 6c12t / 23 GiB + 8 GiB swap |
-| GPU | RTX 3060 12GB（sm_86，28 SM，UUID `GPU-de9cb363-62f6-d10e-9cd0-26d071ac1974`） |
+| GPU | RTX 3060 12GB（sm_86，28 SM，UUID `GPU-<UUID>`） |
 | 驱动 | 580.178.04（Secure Boot disabled） |
 | **PCIe（idle）** | **Gen1 ×4，max Gen2 ×16** ← 链路是 prefill 的关键限制，需在负载下复采样 |
 | CUDA | 项目自带 13.1（redist 13.1.0，组件化，`compute_86` 在列，无 `compute_70`） |

@@ -82,7 +82,9 @@ EOF
 fi
 export GPU_UUID="$GPU_UUID_DETECTED"
 export CUDA_VISIBLE_DEVICES="$GPU_UUID"
-log "锁卡 GPU_UUID=$GPU_UUID"
+# 不打印 UUID 本身：容器日志经常被贴到 issue / 聊天里，那是本机的硬件唯一标识。
+# 需要核对到底选了哪张卡时，在容器里看 /proc/driver/nvidia/gpus/*/information。
+log "已锁定兼容 GPU（UUID 已隐藏）"
 
 # ---------------------------------------------------------------------------
 # 2. 生成容器内的 runtime.env

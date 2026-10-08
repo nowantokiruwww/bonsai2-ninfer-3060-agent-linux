@@ -77,12 +77,12 @@ cudaErrorNoKernelImageForDevice: no kernel image is available for execution on t
 |---|---|---|
 | GPU | **sm_86**：RTX 3060 / 3060 Ti / 3070 / 3080 / 3090 | RTX 3060 12 GB，28 SM |
 | 显存 | ≥ 12 GB（含桌面占用） | 12,288 MiB |
-| 驱动 | ≥ 570（本项目用 580.x） | 580.x |
+| 驱动 | ≥ 580（CUDA 13.1） | 580.x |
 | 系统 | Linux x86_64（systemd 可选） | Ubuntu 24.04.x |
-| 内核 | 任意较新的 | 7.0.x |
+| 内核 | 任意较新的 | — |
 | 内存 | ≥ 16 GB 建议 | — |
-| 磁盘 | ≥ 13 GB（载荷 2.6 GB + 模型 9.5 GB） | — |
-| Python | 3.8+（**只用标准库，不需要 pip**） | 3.12.3 |
+| 磁盘 | ≥ 15 GB（含运行载荷分卷缓存） | — |
+| Python | 3.8+（**只用标准库，不需要 pip**） | 3.12.x |
 
 **不需要**：CUDA Toolkit、nvidia-container-toolkit、Docker、pip、任何 Python 第三方包。
 CUDA 运行库（cuBLAS / nvJitLink / cudart）随引擎载荷一起发，由 `LD_LIBRARY_PATH` 指向仓库内的 `runtime/lib/`。
@@ -139,8 +139,10 @@ cd bonsai2-ninfer-3060-agent-linux
 
 ```bash
 ./scripts/make-release.sh                    # 压缩 + 切卷 → dist/
-export GITHUB_TOKEN=ghp_xxxxxxxx             # classic PAT，勾 repo 这一个 scope 就够
-./scripts/publish-release.sh                 # 建 Release（若不存在）+ 传附件
+read -rsp "GitHub token: " GITHUB_TOKEN; echo
+export GITHUB_TOKEN
+./scripts/publish-release.sh
+unset GITHUB_TOKEN
 ```
 
 `publish-release.sh` 会自己判断哪些附件已经传过并跳过，**传断了直接重跑就续传**。
@@ -192,10 +194,10 @@ export GITHUB_TOKEN=ghp_xxxxxxxx             # classic PAT，勾 repo 这一个 
 
 ```
   API      http://127.0.0.1:8098/v1
-  API      http://YOUR_LAN_IP:8098/v1      ← 笔记本用这个
+  API      http://192.0.2.23:8098/v1      ← 笔记本用这个
 ```
 
-> ⚠ `YOUR_LAN_IP` 只是**示例**。你跑的时候这里打印的是**你自己台式机的局域网 IP**，
+> ⚠ `192.0.2.23` 只是**示例**。你跑的时候这里打印的是**你自己台式机的局域网 IP**，
 > 每台机器都不一样（`192.168.x.x` / `10.x.x.x` / `172.16-31.x.x` 这些是内网地址段）。
 > 网页控制台里也能直接看到完整地址并一键复制，不用自己猜。
 >
@@ -215,7 +217,7 @@ export GITHUB_TOKEN=ghp_xxxxxxxx             # classic PAT，勾 repo 这一个 
 
 ```bash
 # 把下面的地址换成台式机 ./start.sh --lan 打印出来的那一条
-export OPENAI_BASE_URL=http://YOUR_LAN_IP:8098/v1
+export OPENAI_BASE_URL=http://192.0.2.23:8098/v1
 export OPENAI_API_KEY=not-needed      # 引擎不校验 key，随便填
 ```
 
@@ -228,11 +230,11 @@ export OPENAI_API_KEY=not-needed      # 引擎不校验 key，随便填
 ./restart.sh --local      # 绑回 127.0.0.1
 ```
 
-防火墙（如果用 ufw）—— `YOUR_LAN_CIDR4` 换成你自己的网段：
+防火墙（如果用 ufw）—— `192.0.2.0/24` 换成你自己的网段：
 
 ```bash
-sudo ufw allow from YOUR_LAN_CIDR4 to any port 8098 proto tcp
-sudo ufw allow from YOUR_LAN_CIDR4 to any port 8099 proto tcp
+sudo ufw allow from 192.0.2.0/24 to any port 8098 proto tcp
+sudo ufw allow from 192.0.2.0/24 to any port 8099 proto tcp
 ```
 
 **一个实测出来的坑**：引擎**不发 CORS 头**（`OPTIONS` 预检直接返回 404）。
@@ -298,11 +300,31 @@ unit 里的路径是**安装时烘焙**的本仓库绝对路径，所以仓库�
 
 ## 用 Docker 跑
 
+一条命令（取载荷 + 构建镜像 + 起容器，已存在的东西会跳过）：
+
 ```bash
-./scripts/fetch-runtime.sh --auto                    # 先让仓库有引擎
+./docker/deploy.sh                                   # 本机访问，前台跑
+./docker/deploy.sh -d                                # 后台跑
+./docker/deploy.sh --lan -d                          # 让笔记本连过来（⚠ 无鉴权）
+BASE=docker.m.daocloud.io/library/ubuntu:24.04 ./docker/deploy.sh   # 国内拉不动基座时
+```
+
+`deploy.sh` 只做编排，实际动作都交给下面三个脚本，所以不存在第二份实现；
+`logs` / `status` / `stop` / `shell` 这几个子命令会**跳过安装和构建**直接作用于已有容器：
+
+```bash
+./docker/deploy.sh logs      # 跟日志
+./docker/deploy.sh status    # 容器状态 + 两个端口探活
+./docker/deploy.sh stop      # 停
+./docker/deploy.sh shell     # 进容器 bash
+```
+
+想分步执行（或只重建镜像）时，等价的三条命令是：
+
+```bash
+./install.sh                                         # 先让仓库有引擎和模型
 ./docker/build.sh --base docker.m.daocloud.io/library/ubuntu:24.04
 ./docker/run.sh                                      # 前台跑起来
-./docker/run.sh --lan -d                             # 或者：让笔记本连过来
 ```
 
 实测镜像 **5.45 GB**（`--with-model` 的胖镜像 **22.7 GB**）。
@@ -461,6 +483,7 @@ bonsai2-ninfer-3060-agent-linux/
 │   └── release.env             下载地址（默认已指向本仓库 Release，一般不用改）
 │
 ├── docker/
+│   ├── deploy.sh               ★ 一键部署：安装 → 构建 → 运行（只做编排）
 │   ├── Dockerfile              运行镜像（131 个系统依赖的精确闭包）
 │   ├── entrypoint.sh           容器选卡 / 生成配置 / 起进程并收尾
 │   ├── run.sh                  宿主机侧启动器（自动在 --gpus 与手工挂载间选路）
@@ -499,12 +522,14 @@ bonsai2-ninfer-3060-agent-linux/
 | 10-07 20:0x | KV 容量 76,768 | 49,152 | 76,768 只在空卡成立，桌面一占显存就失败 | L21 |
 | 10-07 20:0x | 三处脚本兜底值 4096 | 1024 | 兜底值和实际配置不一致，会静默改变行为 | L28 / L30 |
 
-还有一处**行为**层面的旧版本：`package/entrypoint.sh`（Docker 路径）早期不检查
-`CUDA_VISIBLE_DEVICES` 是不是 UUID 开头。CUDA 的设备序和 `nvidia-smi` **相反**，
+还有一处**行为**层面的旧版本：Docker 路径的入口脚本（本仓库是
+[`docker/entrypoint.sh`](docker/entrypoint.sh)，上一代工程里叫 `package/entrypoint.sh`）
+早期不检查 `CUDA_VISIBLE_DEVICES` 是不是 UUID 开头。CUDA 的设备序和 `nvidia-smi` **相反**，
 不锁 UUID 会挑到机器上另一张卡 —— 本项目实测挑中了 V100（sm_70），当场报
 `cudaErrorNoKernelImageForDevice`（L29）。现在非 `GPU-` 开头直接拒绝启动。
 
-**所有旧版本文件都按时间戳存档，一个都没删。**
+**参数和行为的每一次改动都记在上面这张表与 [`docs/PORTING-LEDGER.md`](docs/PORTING-LEDGER.md) 里** ——
+看到旧值能查到它当初为什么被换掉，不会变成"反正没人看就删了"。
 
 ---
 

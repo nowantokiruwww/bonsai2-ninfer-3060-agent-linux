@@ -267,7 +267,7 @@ def get_gpus():
     try:
         p = subprocess.run(
             ["nvidia-smi",
-             "--query-gpu=index,uuid,name,memory.total,memory.used,memory.free,compute_cap,utilization.gpu",
+             "--query-gpu=index,name,memory.total,memory.used,memory.free,compute_cap,utilization.gpu",
              "--format=csv,noheader,nounits"],
             capture_output=True, text=True, timeout=10,
         )
@@ -276,14 +276,14 @@ def get_gpus():
         gpus = []
         for line in p.stdout.strip().splitlines():
             parts = [x.strip() for x in line.split(",")]
-            if len(parts) < 8:
+            if len(parts) < 7:
                 continue
             gpus.append({
-                "index": parts[0], "uuid": parts[1], "name": parts[2],
-                "mem_total_mib": int(float(parts[3] or 0)),
-                "mem_used_mib": int(float(parts[4] or 0)),
-                "mem_free_mib": int(float(parts[5] or 0)),
-                "compute_cap": parts[6], "util_pct": parts[7],
+                "index": parts[0], "name": parts[1],
+                "mem_total_mib": int(float(parts[2] or 0)),
+                "mem_used_mib": int(float(parts[3] or 0)),
+                "mem_free_mib": int(float(parts[4] or 0)),
+                "compute_cap": parts[5], "util_pct": parts[6],
             })
         return gpus
     except Exception:
@@ -540,7 +540,7 @@ class Handler(BaseHTTPRequestHandler):
                 return self._static(path[len("/static/"):])
 
             if path == "/api/health":
-                return self._json({"ok": True, "root": ROOT, "time": time.time()})
+                return self._json({"ok": True, "root": os.path.basename(ROOT.rstrip(os.sep)), "time": time.time()})
             if path == "/api/status":
                 return self._json(get_status(force=("force" in q)))
             if path == "/api/gpus":

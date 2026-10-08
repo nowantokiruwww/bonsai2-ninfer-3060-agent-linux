@@ -26,7 +26,7 @@ chk() { # chk 描述 命令...
 }
 
 echo "================================================================"
-echo " 仓库自检 —— $ROOT"
+echo " 仓库自检 —— $(basename "$ROOT")"
 echo "================================================================"
 echo
 
@@ -50,12 +50,11 @@ while IFS= read -r s; do
 done < <(find "$ROOT" -name '*.sh' -not -path '*/.git/*' -not -path '*/.cache/*' | sort)
 echo
 
-# --- 3. python 语法 ------------------------------------------------------
+# --- 3. python 语法（compile() 不生成 __pycache__）-----------------------
 log "[3/7] python 语法"
 while IFS= read -r s; do
-  chk "语法 ${s#"$ROOT"/}" python3 -m py_compile "$s"
+  chk "语法 ${s#"$ROOT"/}" python3 -c 'import pathlib,sys; p=pathlib.Path(sys.argv[1]); compile(p.read_bytes(), str(p), "exec")' "$s"
 done < <(find "$ROOT" -name '*.py' -not -path '*/.git/*' -not -path '*/__pycache__/*' | sort)
-find "$ROOT" -name '__pycache__' -prune -exec rm -rf {} + 2>/dev/null || true
 echo
 
 # --- 4. 可执行位 ---------------------------------------------------------
@@ -63,7 +62,7 @@ log "[4/7] 可执行位"
 for f in install.sh start.sh stop.sh restart.sh status.sh logs.sh presets.sh check.sh webui.sh \
          app/launcher.sh scripts/fetch-runtime.sh scripts/fetch-model.sh \
          scripts/install-service.sh scripts/verify.sh scripts/make-release.sh \
-         docker/build.sh docker/run.sh docker/entrypoint.sh; do
+         docker/deploy.sh docker/build.sh docker/run.sh docker/entrypoint.sh; do
   [ -e "$ROOT/$f" ] || continue          # docker/ 是可选的，缺了不算错
   chk "可执行 $f" test -x "$ROOT/$f"
 done
@@ -81,8 +80,8 @@ echo
 # config/、tests/。
 log "[5/7] 仓库外路径引用（核心纪律）"
 SELF="$(basename "${BASH_SOURCE[0]}")"
-raw="$(grep -rnE '(^|[^A-Za-z0-9_])/(home|Users)/[A-Za-z0-9._-]+|~/bonsai|[$]HOME/bonsai|bonsai2-ninfer-3060-agent-linux[.]retired' \
-        "$ROOT" \
+raw="$( (cd "$ROOT" && grep -rnE '(^|[^A-Za-z0-9_])/(home|Users)/[A-Za-z0-9._-]+|~/bonsai|[$]HOME/bonsai|bonsai2-ninfer-3060-agent-linux[.]retired' \
+        . \
         --include='*.sh' --include='*.py' --include='*.md' --include='*.html' --include='*.js' --include='*.env' \
         --exclude-dir=.git --exclude-dir=.cache --exclude-dir=logs --exclude-dir=models \
         --exclude-dir=runtime --exclude-dir=__pycache__ \
@@ -90,16 +89,14 @@ raw="$(grep -rnE '(^|[^A-Za-z0-9_])/(home|Users)/[A-Za-z0-9._-]+|~/bonsai|[$]HOM
         --exclude='PORTING-LEDGER.md' --exclude='AGENT-EXPERIENCE.md' \
         --exclude='LINEAGE.md' --exclude='METHODOLOGY.md' \
         --exclude='REPORT-*.md' \
-        --exclude='runtime.env' 2>/dev/null || true)"
-# 允许的例外：显式标注了 verify:allow-outside-path 的行。
-# 只用于「自动探测本机已有部署」这类**可选**候选路径 —— 找不到照样能跑，绝不能被当成必需路径。
-# 标注意味着知情豁免，不是漏网。
-hits="$(printf '%s\n' "$raw" | grep -v 'verify:allow-outside-path' | grep -v '^$' || true)"
+        --exclude='runtime.env' ) 2>/dev/null || true)"
+# 只保留仓库相对文件和行号；原始匹配内容可能包含本机路径。
+hits="$(printf '%s\n' "$raw" | grep -v 'verify:allow-outside-path' | grep -v '^$' | cut -d: -f1-2 || true)"
 if [ -z "$hits" ]; then
   ok "没有引用仓库外的绝对路径"
   npass=$((npass+1))
 else
-  printf '%s[FAIL]%s 发现仓库外路径引用：\n' "$C_R" "$C_0"
+  printf '%s[FAIL]%s 发现仓库外路径引用（仅显示位置，不显示路径内容）：\n' "$C_R" "$C_0"
   printf '%s\n' "$hits" | sed 's/^/    /'
   FAIL=$((FAIL+1))
 fi
@@ -151,19 +148,10 @@ chk "docs/AGENT-EXPERIENCE.md §13.2 引用的是生产档（$b_install）" test
 echo
 
 # --- 5c. 本机自己的 IP 不许出现在文档里 --------------------------------
-#
-# 起因：README 与 docs/DOCKER.md 里把作者本机的局域网地址 `192.168.1.201`
-# 当成了示例输出。它不会泄漏什么秘密（那是不可路由的内网地址），但**会误导读者** ——
-# 有人真的以为那是"自己电脑的网址"，或者反过来以为自己被暴露到公网了。
-# 示例必须用明显是占位的地址（`192.168.1.23`）或写清楚"这是你自己的"。
-#
-# 这个检查刻意**不硬编码**作者那台机器的地址，而是问本机"你的局域网地址是什么"，
-# 然后断言它们不出现在仓库文档里 —— 谁跑都一样，换台机器自动换一组地址。
-log "[5c/7] 本机 IP 没有写进文档"
+# 文档示例使用 RFC 5737 TEST-NET 地址；真实地址不应进入仓库或可分享输出。
+log "[5c/7] 本机 IP 没有写进公开文档"
 # shellcheck source=../app/env.sh
 if ( . "$ROOT/app/env.sh" 2>/dev/null && declare -F lan_ips >/dev/null ); then
-  # lan_ips 输出的是 "<网卡> <IP>" 两列，这里只要 IP（拿整行去 grep 永远匹配不上，
-  # 那会变成一条永远 PASS 的假检查 —— 第一版就是这么写错的，已修）
   ips="$( (. "$ROOT/app/env.sh"; lan_ips) 2>/dev/null | awk '{print $NF}' | grep -vE '^$' || true )"
 else
   ips="$(ip -4 -o addr show scope global 2>/dev/null | awk '{split($4,a,"/"); print a[1]}' \
@@ -173,23 +161,26 @@ if [ -z "$ips" ]; then
   warn "  没探到本机局域网地址（没有网卡？），这一组检查跳过"
 else
   ipfail=0
+  nips="$(printf '%s\n' "$ips" | awk 'NF {n++} END {print n+0}')"
   while IFS= read -r ip; do
     [ -n "$ip" ] || continue
-    # 只扫会被读者照着做的文档；ledger / 验收报告是历史记录，本来就会写当时的地址
-    h="$(grep -rn -- "$ip" "$ROOT/README.md" "$ROOT/docs" \
-          --include='*.md' \
-          --exclude='PORTING-LEDGER.md' --exclude='AGENT-EXPERIENCE.md' \
-          --exclude='LINEAGE.md' --exclude='METHODOLOGY.md' \
-          --exclude='TROUBLESHOOTING.md' --exclude='PARAMETERS.md' \
-          --exclude='REQUIREMENTS.md' --exclude='REPORT-*.md' 2>/dev/null || true)"
-    h="$(printf '%s\n' "$h" | grep -v '^$' | grep -v 'verify:allow-outside-path' || true)"
+    h="$(cd "$ROOT" && grep -rl -- "$ip" README.md docs --include='*.md' 2>/dev/null || true)"
     if [ -n "$h" ]; then
-      printf '%s[FAIL]%s 本机地址 %s 出现在文档里（示例请用 192.168.1.23 这类占位地址）：\n' "$C_R" "$C_0" "$ip"
-      printf '%s\n' "$h" | sed 's/^/    /'
+      printf '%s[FAIL]%s 检测到本机地址出现在公开文档中（地址已隐藏）：\n' "$C_R" "$C_0"
+      printf '%s\n' "$h" | sed 's#^#    #'
       ipfail=1
     fi
   done <<< "$ips"
-  chk "本机局域网地址（$(printf '%s' "$ips" | tr '\n' ' ' | sed 's/ $//')）没有出现在文档里" test "$ipfail" = 0
+  chk "本机地址未写入公开文档（检查 $nips 个地址）" test "$ipfail" = 0
+fi
+# --- 5d. README 隐私回归门禁 --------------------------------------------
+log "[5d/7] README 隐私标识"
+if grep -qE '(/(home|Users)/[A-Za-z0-9._-]+|GPU-[[:xdigit:]]{6,}-|gh[pousr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,}|AKIA[0-9A-Z]{16}|hf_[A-Za-z0-9]{20,}|[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}|(^|[^0-9.])(10(\.[0-9]{1,3}){3}|192\.168(\.[0-9]{1,3}){2}|172\.(1[6-9]|2[0-9]|3[01])(\.[0-9]{1,3}){2})([^0-9.]|$))' "$ROOT/README.md"; then
+  printf '%s[FAIL]%s README 包含疑似隐私标识（内容已隐藏）\n' "$C_R" "$C_0"
+  FAIL=$((FAIL+1))
+else
+  ok "README 未发现密钥形态、邮箱、个人路径、GPU UUID 或私有 IPv4"
+  npass=$((npass+1))
 fi
 echo
 

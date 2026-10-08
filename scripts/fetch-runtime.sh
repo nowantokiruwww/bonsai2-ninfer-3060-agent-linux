@@ -95,26 +95,47 @@ verify_runtime() {
 }
 
 extract_tarball() {
-  local tb="$1" dest="$2"
+  local tb="$1" dest="$2" stage backup inner
+  stage="${dest}.new"
+  backup="${dest}.rollback.$$"
   need_cmd tar
-  log "解包 $(basename "$tb") → $dest"
-  rm -rf "$dest.new"; mkdir -p "$dest.new"
   case "$tb" in
-    *.zst) need_cmd zstd "apt install zstd"; tar --use-compress-program=unzstd -xf "$tb" -C "$dest.new" ;;
-    *.gz)  tar -xzf "$tb" -C "$dest.new" ;;
-    *)     tar -xf  "$tb" -C "$dest.new" ;;
+    *.zst) need_cmd zstd "sudo apt install zstd" ;;
+  esac
+  log "解包 $(basename "$tb") → $dest"
+  rm -rf "$stage"; mkdir -p "$stage"
+  case "$tb" in
+    *.zst)
+      if ! tar --use-compress-program=unzstd -xf "$tb" -C "$stage"; then
+        rm -rf "$stage"; die "载荷解包失败：$(basename "$tb")"
+      fi ;;
+    *.gz)
+      if ! tar -xzf "$tb" -C "$stage"; then
+        rm -rf "$stage"; die "载荷解包失败：$(basename "$tb")"
+      fi ;;
+    *)
+      if ! tar -xf "$tb" -C "$stage"; then
+        rm -rf "$stage"; die "载荷解包失败：$(basename "$tb")"
+      fi ;;
   esac
   # 容忍 tarball 里多一层目录
-  local inner
-  inner="$(find "$dest.new" -maxdepth 2 -type d -name bin | head -1)"
-  if [ -n "$inner" ]; then
-    inner="$(dirname "$inner")"
-  else
-    inner="$dest.new"
+  inner="$(find "$stage" -maxdepth 2 -type d -name bin | head -1)"
+  if [ -n "$inner" ]; then inner="$(dirname "$inner")"; else inner="$stage"; fi
+  if [ ! -x "$inner/bin/ninfer-serve" ] || [ ! -f "$inner/profiles/device-profiles.json" ]; then
+    rm -rf "$stage"
+    die "载荷解包后缺少 bin/ninfer-serve 或 profiles/device-profiles.json"
   fi
-  rm -rf "$dest"
-  mv "$inner" "$dest"
-  rm -rf "$dest.new"
+  [ ! -e "$backup" ] || { rm -rf "$stage"; die "存在未处理的 runtime 回滚目录：$(basename "$backup")"; }
+  if [ -e "$dest" ] && ! mv "$dest" "$backup"; then
+    rm -rf "$stage"; die "无法暂存现有 runtime：$(basename "$dest")"
+  fi
+  if mv "$inner" "$dest"; then
+    rm -rf "$backup" "$stage"
+  else
+    [ ! -e "$backup" ] || mv "$backup" "$dest"
+    rm -rf "$stage"
+    die "无法安装新 runtime，已尝试恢复旧载荷"
+  fi
 }
 
 copy_from_dir() {
@@ -152,6 +173,10 @@ do_auto() {
 
 do_download() {
   local url="$1"
+  need_cmd tar
+  case "$RUNTIME_ASSET" in
+    *.zst) need_cmd zstd "sudo apt install zstd" ;;
+  esac
   local tb="$ROOT/.cache/$RUNTIME_ASSET"
   local parts="${RUNTIME_ASSET_PARTS:-1}"
   mkdir -p "$ROOT/.cache"
@@ -164,18 +189,26 @@ do_download() {
     local i part purl want got
     for i in $(seq 1 "$parts"); do
       part="$tb.part$i"; purl="$url.part$i"
-      if [ -f "$part" ] && [ -f "$part.sha256" ] \
-         && [ "$(sha256_of "$part")" = "$(awk '{print $1}' "$part.sha256")" ]; then
-        ok "复用已下载的 $(basename "$part")"
-        continue
+      if [ -f "$part" ]; then
+        if [ -f "$part.sha256" ]; then
+          want="$(awk '{print $1}' "$part.sha256")"; got="$(sha256_of "$part")"
+          if [ -n "$want" ] && [ "$got" = "$want" ]; then
+            ok "复用已下载的 $(basename "$part")"
+            continue
+          fi
+          warn "第 $i 卷已有文件未通过校验，将重新下载"
+          rm -f "$part" "$part.sha256"
+        else
+          log "检测到未完成的第 $i 卷，将尝试断点续传"
+        fi
       fi
-      rm -f "$part" "$part.sha256"
-      download "$purl" "$part" || die "第 $i 卷下载失败（重跑本脚本会跳过已下好的卷）：$purl"
-      if curl -fsL -o "$part.sha256" "$purl.sha256" 2>/dev/null; then
+      download "$purl" "$part" || die "第 $i 卷下载失败（重跑本脚本会继续该卷并跳过已下好的卷）：$purl"
+      if curl -fsL --retry 3 --retry-delay 2 -o "$part.sha256" "$purl.sha256" 2>/dev/null; then
         want="$(awk '{print $1}' "$part.sha256")"; got="$(sha256_of "$part")"
-        [ "$want" = "$got" ] || { rm -f "$part"; die "第 $i 卷 sha256 不符：$got ≠ $want"; }
+        [ -n "$want" ] && [ "$want" = "$got" ] || { rm -f "$part" "$part.sha256"; die "第 $i 卷 sha256 不符：$got ≠ $want"; }
         ok "第 $i 卷 sha256 校验通过"
       else
+        rm -f "$part.sha256"
         warn "第 $i 卷没有 .sha256，跳过单卷校验（整包还会校验一次）"
       fi
     done

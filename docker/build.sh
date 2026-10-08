@@ -21,7 +21,7 @@ cd "$ROOT"
 
 VERSION="$(cat VERSION 2>/dev/null || echo 0.1.0)"
 BASE="${BASE:-ubuntu:24.04}"
-TAG="bonsai2-ninfer-3060:${VERSION}"
+TAG="${TAG:-bonsai2-ninfer-3060:${VERSION}}"
 WITH_MODEL=0
 
 while [ $# -gt 0 ]; do
@@ -78,12 +78,17 @@ if [ "$WITH_MODEL" = "1" ]; then
   log "已临时放行 models/（上下文会涨到约 12 GB；构建结束自动还原 .dockerignore）"
 fi
 
-docker build $NOCACHE \
+if ! docker build $NOCACHE \
   --build-arg "BASE=$BASE" \
   --build-arg "WITH_MODEL=$WITH_MODEL" \
   -f docker/Dockerfile \
   -t "$TAG" \
-  . || die "构建失败"
+  . ; then
+  die "构建失败。
+      最常见的原因是基座镜像「$BASE」拉不动 —— 换成镜像站再试一次：
+        ./docker/build.sh --base docker.m.daocloud.io/library/ubuntu:24.04
+      其它情况（依赖闭包、磁盘空间、--with-model）见 docs/DOCKER.md。"
+fi
 
 echo
 log "构建完成"

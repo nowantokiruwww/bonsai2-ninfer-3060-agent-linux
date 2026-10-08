@@ -22,15 +22,23 @@
 ## 快速开始
 
 ```bash
-# 1. 先让仓库有引擎载荷（如果还没做）
-./scripts/fetch-runtime.sh --auto
-
-# 2. 构建镜像
-./docker/build.sh --base docker.m.daocloud.io/library/ubuntu:24.04
-
-# 3. 跑
-./docker/run.sh
+# 一条命令：取载荷 + 拉模型 + 构建镜像 + 起容器
+./docker/deploy.sh
 ```
+
+`docker/deploy.sh` 只是编排，不重复实现任何逻辑 —— 它依次调用
+`./install.sh`（载荷与模型，带断点续传和 sha256 校验）、`./docker/build.sh`、`./docker/run.sh`。
+已经就位的东西会自动跳过，所以重跑一次是安全的。
+
+想分步执行，或者只想重建镜像：
+
+```bash
+./install.sh                                         # 1. 载荷 + 模型 + 自检
+./docker/build.sh --base docker.m.daocloud.io/library/ubuntu:24.04   # 2. 构建镜像
+./docker/run.sh                                      # 3. 跑
+```
+
+`BASE` 默认是 `ubuntu:24.04`；国内拉不动基座时再换成镜像站（见下文）。
 
 跑起来之后打开 <http://127.0.0.1:8099/>，就是网页控制台，
 和裸机跑 `./webui.sh` 得到的是同一个界面：启停、参数、日志、请求指标都在上面。
@@ -41,12 +49,19 @@
 常用命令：
 
 ```bash
-./docker/run.sh -d          # 后台跑
-./docker/run.sh --lan -d    # 后台跑，并且允许局域网访问（见下一节）
-./docker/run.sh logs        # 看容器日志
-./docker/run.sh status      # 容器状态 + 两个端口探活
-./docker/run.sh shell       # 进容器 bash（显卡已挂好，可以 ./start.sh 试）
-./docker/run.sh stop        # 停
+./docker/deploy.sh -d       # 后台跑（等价于 install + build + run，已就位的会跳过）
+./docker/deploy.sh logs     # 看容器日志
+./docker/deploy.sh status   # 容器状态 + 两个端口探活
+./docker/deploy.sh shell    # 进容器 bash（显卡已挂好，可以 ./start.sh 试）
+./docker/deploy.sh stop     # 停
+```
+
+`deploy.sh` 的 `logs` / `status` / `shell` / `stop` 会直接转发给 `docker/run.sh`，
+**不会**重新安装或构建 —— 它们只作用于已有容器：
+
+```bash
+./docker/run.sh -d          # 只跑（不安装、不构建）
+./docker/run.sh --lan -d    # 只跑，并且允许局域网访问（见下一节）
 ```
 
 ---
@@ -69,10 +84,10 @@
 跑完终端会直接打出该用哪个地址：
 
 ```
-[run] 对外地址 http://192.168.1.23:8098/v1
+[run] 对外地址 http://192.0.2.23:8098/v1
 ```
 
-> ⚠ `192.168.1.23` 只是**示例**。你跑的时候打印的是**你自己机器的局域网 IP**，
+> ⚠ `192.0.2.23` 只是**示例**。你跑的时候打印的是**你自己机器的局域网 IP**，
 > 每台机器都不一样。这个地址是 `docker/run.sh` 在宿主机上算出来、通过
 > `BONSAI_ADVERTISE_IP` 传给容器的 —— 不是写死的。
 >
@@ -89,7 +104,7 @@ Python requests / 环境变量），而且因为是对外开放状态，面板�
 
 ```bash
 # 换成上面打印出来的那一条
-export OPENAI_BASE_URL=http://192.168.1.23:8098/v1
+export OPENAI_BASE_URL=http://192.0.2.23:8098/v1
 export OPENAI_API_KEY=not-needed      # 引擎不校验 key，随便填
 ```
 
@@ -128,11 +143,11 @@ export OPENAI_API_KEY=not-needed      # 引擎不校验 key，随便填
 
 ### 防火墙
 
-如果宿主机开着 ufw，光开 `--lan` 还不够，得放行（`192.168.1.0/24` 换成你自己的网段）：
+如果宿主机开着 ufw，光开 `--lan` 还不够，得放行（`192.0.2.0/24` 换成你自己的网段）：
 
 ```bash
-sudo ufw allow from 192.168.1.0/24 to any port 8098 proto tcp
-sudo ufw allow from 192.168.1.0/24 to any port 8099 proto tcp
+sudo ufw allow from 192.0.2.0/24 to any port 8098 proto tcp
+sudo ufw allow from 192.0.2.0/24 to any port 8099 proto tcp
 ```
 
 （把网段换成你自己的。`sudo ufw status` 看当前规则。）
@@ -167,9 +182,11 @@ curl、Python、各种本地客户端这类**桌面客户端**；**浏览器里�
 
 - 设备节点：`/dev/nvidiactl`、`/dev/nvidia-uvm`、`/dev/nvidia-uvm-tools`、
   `/dev/nvidia-modeset`、`/dev/nvidia0`…
-- 驱动用户态库：`libcuda.so.580.178.04`、`libnvidia-ptxjitcompiler.so.580.178.04`、
-  `libnvidia-nvvm.so.580.178.04`、`libnvidia-ml.so.580.178.04`
-  —— 按实际版本号挂到容器里约定俗成的名字（`libcuda.so.1` 等）
+- 驱动用户态库：`libcuda.so.<驱动版本>`、`libnvidia-ptxjitcompiler.so.<驱动版本>`、
+  `libnvidia-nvvm.so.<驱动版本>`、`libnvidia-ml.so.<驱动版本>`（版本号每台机器不同）
+  —— 按实际版本号挂到容器里约定俗成的名字（`libcuda.so.1` 等）。
+  `docker/run.sh` 是自动取最新那份；手写时先看：
+  `ls /usr/lib/x86_64-linux-gnu/libcuda.so.*`
 - `/usr/bin/nvidia-smi`（可选，方便人看）
 
 **驱动的用户态库必须来自宿主机**，因为它的版本要和宿主内核里的
@@ -193,7 +210,7 @@ CUDA 运行时看到的设备顺序和 `nvidia-smi` 是**反的**。所以本项
 **按 UUID 锁卡**，并且拒绝 `GPU-` 之外的任何值：
 
 ```
-[run] 锁卡 GPU-de9cb363-62f6-d10e-9cd0-26d071ac1974
+[run] 锁卡 GPU-<UUID>
 ```
 
 容器的 `entrypoint.sh` 有两级兜底，因为它可能没有 `nvidia-smi`：
@@ -205,8 +222,8 @@ CUDA 运行时看到的设备顺序和 `nvidia-smi` 是**反的**。所以本项
 里面直接写着 `Model:` 和 `GPU UUID:`。本机实测输出：
 
 ```
-0000:25:00.0   NVIDIA GeForce RTX 3060       GPU-de9cb363-62f6-d10e-9cd0-26d071ac1974
-0000:26:00.0   Tesla V100-SXM2-16GB          GPU-b0834d81-085f-e807-9991-89e04ecb37cb
+0000:25:00.0   NVIDIA GeForce RTX 3060       GPU-<UUID>
+0000:26:00.0   Tesla V100-SXM2-16GB          GPU-<UUID>
 ```
 
 ---
@@ -345,7 +362,8 @@ cat /proc/driver/nvidia/gpus/*/information
 ls /usr/lib/x86_64-linux-gnu/libcuda.so.*
 ```
 
-拿到的版本号和 `docker/compose.yml` / `docker/run.sh` 里挂的对照一下。
+拿到的版本号和 `docker/run.sh` 自动挂的那份（`ls` 出来的最新一个）对照一下；
+走 compose 时对照 `$NVIDIA_DRIVER` 的值。
 
 ### 容器里 `nvidia-smi` 报错但引擎正常
 
@@ -381,17 +399,23 @@ ls /usr/lib/x86_64-linux-gnu/libcuda.so.*
 
 ## compose
 
-`docker/compose.yml` 是 `docker/run.sh` 的等价物，用的是**手工挂载**方案
-（不需要 toolkit）。用之前要改两处成你自己的：
-
-- `devices:` 里的 `/dev/nvidia0` —— 改成 3060 对应的那个节点
-- `GPU_UUID` —— 改成本机 3060 的 UUID
+`docker/compose.yml` 要求两个变量**显式给定**，都带 `:?` 必填保护 —— 缺了会当场报错，
+而不是静默挂错库或跑错卡；也不再把某台机器的 UUID / 驱动版本写在文件里：
 
 ```bash
+export GPU_UUID="$(nvidia-smi --query-gpu=uuid,compute_cap --format=csv,noheader,nounits \
+  | awk -F, '$2+0 == 8.6 {gsub(/ /,"",$1); print $1; exit}')"
+test -n "$GPU_UUID" || { echo "没有找到 sm_86 GPU" >&2; exit 1; }
+
+export NVIDIA_DRIVER="$(ls /usr/lib/x86_64-linux-gnu/libcuda.so.* \
+  | sed 's#.*libcuda\.so\.##' | sort -V | tail -1)"
+
 docker compose -f docker/compose.yml up -d
 docker compose -f docker/compose.yml logs -f
 docker compose -f docker/compose.yml down
 ```
+
+（不想自己填这两个值就用 `./docker/run.sh` —— 它会自动探测。）
 
 如果本机装了 toolkit，把 `devices:` 和那几个驱动库挂载删掉，换成
 `deploy.resources.reservations.devices`，注释里写了。

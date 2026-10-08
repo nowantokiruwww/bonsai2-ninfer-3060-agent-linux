@@ -35,26 +35,34 @@ done
 
 echo "================================================================"
 echo " bonsai2-ninfer-3060-agent-linux 安装"
-echo " 仓库根：$ROOT"
+echo " 仓库：$(basename "$ROOT")"
 echo "================================================================"
 echo
 
 # --- 1. 环境自检 ---------------------------------------------------------
 log "[1/5] 环境自检"
 if ! command -v nvidia-smi >/dev/null 2>&1; then
-  die "找不到 nvidia-smi —— 需要先装 NVIDIA 驱动（>= 570）。参考 docs/REQUIREMENTS.md"
+  die "找不到 nvidia-smi —— 需要先装 NVIDIA 驱动（>= 580）。参考 docs/REQUIREMENTS.md"
 fi
 DRV="$(nvidia-smi --query-gpu=driver_version --format=csv,noheader 2>/dev/null | head -1)"
 log "  驱动版本：${DRV:-未知}"
+DRV_MAJOR="${DRV%%.*}"
+case "$DRV_MAJOR" in
+  ''|*[!0-9]*) die "无法解析 NVIDIA 驱动版本：${DRV:-未知}" ;;
+esac
+[ "$DRV_MAJOR" -ge 580 ] || die "驱动版本过旧：检测到 ${DRV}，CUDA 13.1 要求 NVIDIA 驱动 >= 580。参考 docs/REQUIREMENTS.md"
+command -v python3 >/dev/null 2>&1 || die "缺少 python3（需要 Python 3.8+，用于网页控制台）"
+python3 -c 'import sys; raise SystemExit(sys.version_info < (3, 8))' 2>/dev/null \
+  || die "Python 版本过旧：需要 Python 3.8+"
 
-GPU_LINE="$(nvidia-smi --query-gpu=index,uuid,name,memory.total,compute_cap \
+GPU_LINE="$(nvidia-smi --query-gpu=index,name,memory.total,compute_cap \
             --format=csv,noheader,nounits 2>/dev/null | grep '8\.6' | head -1)"
 if [ -z "$GPU_LINE" ]; then
   warn "没找到 compute capability 8.6（RTX 3060/3070/3080/3090）的卡。"
   warn "本项目的引擎只编译了 sm_86 内核，别的架构会报："
   warn "  cudaErrorNoKernelImageForDevice: no kernel image is available"
   echo
-  nvidia-smi --query-gpu=index,uuid,name,memory.total,compute_cap \
+  nvidia-smi --query-gpu=index,name,memory.total,compute_cap \
              --format=csv,noheader 2>/dev/null | sed 's/^/    /'
   die "需要一张 sm_86 的卡"
 fi
@@ -123,7 +131,7 @@ SPEC_FLAGS="--spec dflash2 --draft-tokens 7"
 #     重复同一个工具调用，陷入死循环（病历 L26）。
 EXTRA_FLAGS="--max-concurrency 1 --temperature 1.0 --top-p 0.95 --top-k 20 --default-reasoning-effort medium --default-thinking-budget 1024 --request-log-jsonl $ROOT/logs/request.jsonl"
 EOF
-  ok "  已写入 config/runtime.env（锁卡 $UUID）"
+  ok "  已写入 config/runtime.env（已按兼容 GPU UUID 锁定，标识已隐藏）"
 fi
 echo
 

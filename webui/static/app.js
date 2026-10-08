@@ -832,8 +832,7 @@
 
         var uuid = document.createElement('span');
         uuid.className = 'mono dim';
-        uuid.textContent = g.uuid || '';
-        uuid.title = g.uuid || '';
+        uuid.textContent = 'UUID 已隐藏';
         row.appendChild(uuid);
 
         box.appendChild(row);

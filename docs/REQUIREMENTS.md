@@ -51,9 +51,9 @@ nvidia-smi --query-gpu=index,uuid,name,memory.total,compute_cap --format=csv
 12 GB 的卡跑得下，但**必须给桌面留余量**。桌面上开个浏览器，KV 容量上限就会往下掉，
 所以默认取 49,152 而不是实测顶端的 76,768（病历 L21）。
 
-### 1.3 NVIDIA 驱动 ≥ 570
+### 1.3 NVIDIA 驱动 ≥ 580
 
-本项目实测驱动 **580.178.04**。驱动太老会缺 CUDA 13 需要的符号。
+本仓库当前发布的 CUDA 13.1 用户态运行库要求 NVIDIA 580 系列驱动；已端到端实测 **580.178.04**。低于 580 的驱动不受支持。
 
 ```bash
 nvidia-smi --query-gpu=driver_version --format=csv,noheader
@@ -83,14 +83,16 @@ nvidia-smi --query-gpu=driver_version --format=csv,noheader
 free -h
 ```
 
-### 1.6 磁盘 ≥ 13 GB
+### 1.6 磁盘 ≥ 15 GB
 
 | 内容 | 体积 |
 |---|---|
 | 引擎载荷（解包后） | 2.6 GB |
-| 载荷压缩包（缓存，可删） | 约 1 GB |
+| 引擎 Release 分卷（安装缓存） | 2.06 GiB |
 | 模型权重 | 9.5 GB |
 | 日志 | 增长，可轮转 |
+
+安装期间需要同时容纳解包后的引擎、Release 分卷缓存和模型；下载完成后可删除 `./.cache/runtime-*.tar.zst.part*` 释放约 2.06 GiB。
 
 `models/` 和 `runtime/` 必须在**同一个文件系统**上才能用硬链接省空间（`fetch-model.sh --from` 会自动尝试）。
 
@@ -176,7 +178,7 @@ python3 --version
 ```
 
 `scripts/verify.sh` 里有一条纪律检查特别重要：**扫描全仓库，不允许出现仓库外的绝对路径**。
-因为别人 clone 下来只拿得到仓库里的东西，任何 `/home/某某/...` 都是跑不通的。
+因为别人 clone 下来只拿得到仓库里的东西，任何写死在维护者本机 HOME 下的路径都跑不通。
 
 ---
 

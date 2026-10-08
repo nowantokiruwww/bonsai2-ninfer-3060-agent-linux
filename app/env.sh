@@ -66,9 +66,9 @@ gpu_list() {
 }
 
 # 自动挑一张卡：优先 compute_cap 8.6（本项目就是给 3060 编的），
-# 且空闲显存最多。找不到 8.6 就退回空闲最多的一张。
+# 且空闲显存最多。没有 sm_86 时必须失败，不能退回不兼容架构。
 gpu_autodetect_uuid() {
-  local best_cc="" best_mem=-1 line uuid cc mem
+  local best_mem=-1 best_cc="" line uuid cc mem
   while IFS= read -r line; do
     [ -n "$line" ] || continue
     uuid="$(echo "$line" | awk -F', ' '{print $2}')"
@@ -79,16 +79,7 @@ gpu_autodetect_uuid() {
       best_mem="$mem"; best_cc="$uuid"
     fi
   done < <(gpu_list)
-  if [ -n "$best_cc" ]; then printf '%s' "$best_cc"; return 0; fi
-  # 退回：空闲显存最多
-  best_mem=-1
-  while IFS= read -r line; do
-    [ -n "$line" ] || continue
-    uuid="$(echo "$line" | awk -F', ' '{print $2}')"
-    mem="$(echo "$line"  | awk -F', ' '{print $5}')"
-    [ -n "$uuid" ] || continue
-    if [ "${mem:-0}" -gt "$best_mem" ] 2>/dev/null; then best_mem="$mem"; best_cc="$uuid"; fi
-  done < <(gpu_list)
+  [ -n "$best_cc" ] || return 1
   printf '%s' "$best_cc"
 }
 

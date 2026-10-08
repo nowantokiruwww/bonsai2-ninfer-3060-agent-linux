@@ -153,9 +153,17 @@ preflight() {
   local uuid; uuid="$(resolve_gpu_uuid)"
   if ! apply_gpu_lock "$uuid"; then fail=1; fi
   if [ -n "${CUDA_VISIBLE_DEVICES:-}" ]; then
-    ok "锁卡 CUDA_VISIBLE_DEVICES=$CUDA_VISIBLE_DEVICES"
-    ok "实卡 $(gpu_name_of_uuid "$uuid")  空闲 $(gpu_free_of_uuid "$uuid") MiB"
-    if ! "$BIN" --help >/dev/null 2>&1 && [ ! -x "$BIN" ]; then :; fi
+    ok "已锁定兼容 GPU（UUID 已隐藏）"
+    # 容器里不一定有 nvidia-smi（toolkit-less 且没挂 /usr/bin/nvidia-smi），
+    # 这时型号和空闲显存都取不到 —— 说清楚比打印一行空值好。
+    local gname gfree
+    gname="$(gpu_name_of_uuid "$uuid")"
+    gfree="$(gpu_free_of_uuid "$uuid")"
+    if [ -n "$gname" ] || [ -n "$gfree" ]; then
+      ok "实卡 ${gname:-未知型号}  空闲 ${gfree:-?} MiB"
+    else
+      ok "容器里没有 nvidia-smi，显卡型号/空闲显存不可见（不影响运行）"
+    fi
   fi
 
   return $fail
@@ -210,7 +218,7 @@ start_engine() {
   else
     echo "  监听     : $host:$port  （仅本机）"
   fi
-  echo "  锁卡     : ${CUDA_VISIBLE_DEVICES:-<未锁>}  $(gpu_name_of_uuid "${CUDA_VISIBLE_DEVICES:-}")"
+  echo "  锁卡     : $(gpu_name_of_uuid "${CUDA_VISIBLE_DEVICES:-}")"
   echo "  日志     : ${SERVICE_LOG#"$ROOT"/}"
   echo "  命令     :"
   show_cmd
@@ -293,8 +301,8 @@ do_status() {
     printf '"kv_dtype":"%s","kv_capacity":"%s",' "$kv_dtype" "$kv_cap"
     printf '"thinking":"%s","budget":"%s","effort":"%s",' "$think" "$budget" "$effort"
     printf '"sampling":"%s","spec":"%s",' "$sampling" "$spec"
-    printf '"gpu_uuid":"%s","gpu_name":"%s","gpu_free_mib":"%s",' \
-           "$uuid" "$(gpu_name_of_uuid "$uuid")" "$(gpu_free_of_uuid "$uuid")"
+    printf '"gpu_uuid":"","gpu_name":"%s","gpu_free_mib":"%s",' \
+           "$(gpu_name_of_uuid "$uuid")" "$(gpu_free_of_uuid "$uuid")"
     printf '"model":"%s",' "$MODEL_ID"
     printf '"log_bytes":%s,' "$(stat -c %s "$SERVICE_LOG" 2>/dev/null || echo 0)"
     printf '"req_log_bytes":%s,' "$(stat -c %s "$REQ_LOG" 2>/dev/null || echo 0)"
@@ -309,7 +317,7 @@ do_status() {
     done < <(urls_for_bind "$host" "$port")
     printf '],'
     if is_lan_exposed "$host"; then printf '"lan_exposed":true,'; else printf '"lan_exposed":false,'; fi
-    printf '"root":"%s"' "$ROOT"
+    printf '"root":"%s"' "$(basename "$ROOT")"
     printf '}\n'
     return 0
   fi
@@ -326,9 +334,9 @@ do_status() {
   else
     echo "[ -- ] 未运行"
   fi
-  echo "  仓库根    $ROOT"
+  echo "  仓库      $(basename "$ROOT")"
   local uuid; uuid="$(resolve_gpu_uuid)"
-  echo "  可用卡    $uuid  $(gpu_name_of_uuid "$uuid")  空闲 $(gpu_free_of_uuid "$uuid") MiB"
+  echo "  可用卡    $(gpu_name_of_uuid "$uuid")  空闲 $(gpu_free_of_uuid "$uuid") MiB"
   if [ -z "$pid" ] && [ -n "$uuid" ]; then
     echo "  提示      启动：./start.sh    网页控制台：./webui.sh"
   fi
