@@ -110,6 +110,46 @@ if grep -rn 'HOME' "$ROOT/app/env.sh" 2>/dev/null | grep -qE '^\s*[0-9]+:\s*(loc
 fi
 echo
 
+# --- 5b. 生产档参数一致性 -----------------------------------------------
+#
+# 起因（L28/L30）：思考预算从 4096 改成 1024 后，docs/AGENT-EXPERIENCE.md 的
+# §13.2（标题写着"最终配置"，是**现在时**）还留着 4096。verify 没发现，因为它把
+# 这个文件整份当成"历史记录"豁免了 —— 豁免把"历史叙述"和"当前配置"混为一谈。
+#
+# 所以这里单独钉死"生产档"的定义：同一个值必须同时出现在
+#   install.sh（生成 config/runtime.env 的模板）
+#   docker/entrypoint.sh（容器里的同一份模板）
+#   app/presets.env 的 balanced 档（网页控制台点"balanced"时用）
+#   以及 docs/AGENT-EXPERIENCE.md §13.2 那段自称"最终配置"的代码块
+# 四处取值不同就是在制造"文档说 A、脚本做 B"的静默漂移。
+log "[5b/7] 生产档参数一致性"
+budget_of() { grep -oE -- '--default-thinking-budget [0-9]+' "$1" 2>/dev/null | awk '{print $2}' | sort -u | head -1; }
+b_install="$(budget_of "$ROOT/install.sh")"
+b_docker="$(budget_of "$ROOT/docker/entrypoint.sh")"
+b_presets="$(bash -c '. "$1/app/presets.env"; preset_apply balanced; printf "%s" "$P_BUDGET"' _ "$ROOT" 2>/dev/null || true)"
+# 取 §13.2 标题之后出现的第一个 --default-thinking-budget 的数字
+b_doc="$(awk '/^### 13\.2 /{f=1} f && /--default-thinking-budget/{
+            match($0, /--default-thinking-budget [0-9]+/);
+            print substr($0, RSTART+26, RLENGTH-26); exit }' \
+        "$ROOT/docs/AGENT-EXPERIENCE.md" 2>/dev/null || true)"
+
+chk "install.sh 有生产档思考预算" test -n "$b_install"
+chk "docker/entrypoint.sh 有生产档思考预算" test -n "$b_docker"
+chk "presets.env balanced 有思考预算" test -n "$b_presets"
+if [ "$b_install" = "$b_docker" ] && [ "$b_install" = "$b_presets" ]; then
+  chk "三处脚本的生产档思考预算一致（=$b_install）" test 1 = 1
+else
+  warn "  生产档思考预算不一致：install.sh=$b_install docker=$b_docker presets.balanced=$b_presets"
+  chk "三处脚本的生产档思考预算一致" test 1 = 0
+fi
+# 这不是"不许出现 4096"（4096 是 think 档，且矩阵里到处是它），
+# 而是"不许把 4096 当成生产默认"。
+if [ -z "$b_doc" ]; then
+  warn "  §13.2 里没解析到思考预算（文档结构变了？下面那条会失败）"
+fi
+chk "docs/AGENT-EXPERIENCE.md §13.2 引用的是生产档（$b_install）" test "$b_doc" = "$b_install"
+echo
+
 # --- 6. README 里出现的命令，脚本都存在 --------------------------------
 log "[6/7] README 命令可解析"
 cmds="$(grep -oE '\./[A-Za-z0-9_.-]+(/[A-Za-z0-9_.-]+)?\.sh' "$ROOT/README.md" 2>/dev/null | sort -u || true)"

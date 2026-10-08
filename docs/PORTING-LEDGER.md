@@ -519,11 +519,11 @@ V100(llama.cpp-prism) 的参数，并**把 V100 的思考与采样参数照抄�
 
 | | V100 (llama.cpp-prism) | 3060 (NInfer, 对齐后) |
 |---|---|---|
-| 启动脚本 | `~/llm/scripts/start-v100-bonsai-prism.sh` | `~/bonsai-ninfer-3060/config/runtime.env:47,52` |
+| 启动脚本 | `~/llm/scripts/start-v100-bonsai-prism.sh` | `config/runtime.env:22,29`（本节写于 L27 时，当时部署根在 `~/bonsai-ninfer-3060/`） |
 | 端点 | `http://127.0.0.1:8913/v1`（pid 1090304） | `http://127.0.0.1:8098/v1` |
 | 模型 | `Ternary-Bonsai-2-27B-PTQ1_0-mtp-lean.gguf` | `bonsai2-27b` |
 | 思考档位 | `--reasoning-effort medium` | `--default-reasoning-effort medium` |
-| 思考预算 | （默认）`--reasoning-budget -1` = **不限** | `--default-thinking-budget 4096` ← **必须偏离** |
+| 思考预算 | （默认）`--reasoning-budget -1` = **不限** | `--default-thinking-budget 4096` ← **必须偏离**（**L28 已改为 1024**） |
 | 采样 | `--temp 1.0 --top-p 0.95 --top-k 20` | `--temperature 1.0 --top-p 0.95 --top-k 20` |
 | 投机 | `--spec-type draft-mtp --spec-draft-n-max 1` | `--spec dflash2 --draft-tokens 7`（**不可移植**） |
 | 旧采样 | — | ~~`--greedy`~~ **已删除** |
@@ -766,9 +766,11 @@ V100(llama.cpp-prism) 的参数，并**把 V100 的思考与采样参数照抄�
 引擎日志停在 `loading weights | 7.99 GiB`。
 **就绪判据必须判 HTTP 200（`curl -o /dev/null -w '%{http_code}'`），不能只判连接成功。**
 
-**回滚**：改 `~/bonsai-ninfer-3060/config/runtime.env` 一行（`--default-thinking-budget`）后
-`systemctl --user restart bonsai2-ninfer-3060.service`。四档都实测可用。
-本轮改动前 `runtime.env` 由 `97-deploy-service.sh` 模板重新生成（生成器已同步成本档参数与正确注释）。
+**回滚**：改 `config/runtime.env` 一行（`--default-thinking-budget`）后重启。
+本仓库里就是 `./restart.sh`（或 `systemctl --user restart bonsai2-ninfer-3060.service`）。
+四档都实测可用。本轮改动前 `runtime.env` 由 `97-deploy-service.sh` 模板重新生成
+（生成器已同步成本档参数与正确注释）—— 那个脚本属于旧工程 `*.retired`，
+本仓库已改为 `install.sh` 生成、`app/presets.env` 提供档位。
 
 ---
 
