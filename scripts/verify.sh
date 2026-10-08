@@ -79,7 +79,7 @@ echo
 # config/、tests/。
 log "[5/7] 仓库外路径引用（核心纪律）"
 SELF="$(basename "${BASH_SOURCE[0]}")"
-raw="$(grep -rnE '(^|[^A-Za-z0-9_])/(home|Users)/[A-Za-z0-9._-]+|~/bonsai|[$]HOME/bonsai|bonsai2-ninfer-3060-agent-linux' \
+raw="$(grep -rnE '(^|[^A-Za-z0-9_])/(home|Users)/[A-Za-z0-9._-]+|~/bonsai|[$]HOME/bonsai|bonsai2-ninfer-3060-agent-linux[.]retired' \
         "$ROOT" \
         --include='*.sh' --include='*.py' --include='*.md' --include='*.html' --include='*.js' --include='*.env' \
         --exclude-dir=.git --exclude-dir=.cache --exclude-dir=logs --exclude-dir=models \

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-webui/server.py —— ninfer-3060-bonsai 的网页控制台后端
+webui/server.py —— bonsai2-ninfer-3060-agent-linux 的网页控制台后端
 
 纯 Python 标准库，无第三方依赖。启动：
 
@@ -84,7 +84,7 @@ def write_env_values(updates):
     if not os.path.isfile(ENVF):
         os.makedirs(os.path.dirname(ENVF), exist_ok=True)
         with open(ENVF, "w", encoding="utf-8") as fh:
-            fh.write("# ninfer-3060-bonsai runtime config\n")
+            fh.write("# bonsai2-ninfer-3060-agent-linux runtime config\n")
     with open(ENVF, "r", encoding="utf-8") as fh:
         lines = fh.readlines()
 
@@ -580,7 +580,7 @@ class Handler(BaseHTTPRequestHandler):
 
 
 def main():
-    ap = argparse.ArgumentParser(description="ninfer-3060-bonsai 网页控制台")
+    ap = argparse.ArgumentParser(description="bonsai2-ninfer-3060-agent-linux 网页控制台")
     ap.add_argument("--host", default=DEFAULT_HOST)
     ap.add_argument("--port", type=int, default=DEFAULT_PORT)
     args = ap.parse_args()
@@ -591,7 +591,7 @@ def main():
     httpd = ThreadingHTTPServer((args.host, args.port), Handler)
     httpd.daemon_threads = True
     url = "http://%s:%d/" % (args.host, args.port)
-    print("ninfer-3060-bonsai 网页控制台")
+    print("bonsai2-ninfer-3060-agent-linux 网页控制台")
     print("  仓库根 : %s" % ROOT)
     print("  地址   : %s" % url)
     print("  Ctrl+C 退出")

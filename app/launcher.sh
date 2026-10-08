@@ -307,7 +307,7 @@ do_status() {
 # --------------------------------------------------------------------------
 usage() {
   cat <<EOF
-ninfer-3060-bonsai —— 引擎启停与日志
+bonsai2-ninfer-3060-agent-linux —— 引擎启停与日志
 
   ./start.sh   [选项]        后台启动并等待就绪
   ./stop.sh                  停止（SIGTERM，约 5 秒）

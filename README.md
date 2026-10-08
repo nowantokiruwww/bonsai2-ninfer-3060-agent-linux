@@ -1,4 +1,4 @@
-# ninfer-3060-bonsai
+# bonsai2-ninfer-3060-agent-linux
 
 **在单张 RTX 3060 12 GB 上跑 Ternary-Bonsai-2-27B 的完整、自包含部署仓库。**
 
@@ -92,8 +92,8 @@ CUDA 运行库（cuBLAS / nvJitLink / cudart）随引擎载荷一起发，由 `L
 ## 五分钟开始
 
 ```bash
-git clone https://github.com/<你的用户名>/ninfer-3060-bonsai.git
-cd ninfer-3060-bonsai
+git clone https://github.com/<你的用户名>/bonsai2-ninfer-3060-agent-linux.git
+cd bonsai2-ninfer-3060-agent-linux
 
 ./install.sh          # ① 引擎载荷（2.6 GB，Release 附件） ② 模型（9.5 GB，HF 镜像） ③ 自检
 ./start.sh            # 启动，约 35 秒
@@ -181,7 +181,7 @@ curl http://127.0.0.1:8098/v1/chat/completions \
 ./scripts/install-service.sh                 # 装 systemd 用户服务并启动
 ./scripts/install-service.sh --no-start      # 只装不启动
 ./scripts/install-service.sh --remove        # 卸载
-systemctl --user enable ninfer-3060-bonsai   # 开机自启
+systemctl --user enable bonsai2-ninfer-3060-agent-linux   # 开机自启
 sudo loginctl enable-linger $USER            # 不登录也保持运行
 ```
 
@@ -298,7 +298,7 @@ decode ≈ 地板(≈26) × (1 + 草稿数 × 接受率)
 ## 仓库结构
 
 ```
-ninfer-3060-bonsai/
+bonsai2-ninfer-3060-agent-linux/
 ├── install.sh                  一键安装（载荷 + 模型 + 自检）
 ├── start.sh stop.sh restart.sh status.sh logs.sh presets.sh check.sh
 ├── webui.sh                    网页控制台入口
