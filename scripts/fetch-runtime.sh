@@ -153,24 +153,60 @@ do_auto() {
 do_download() {
   local url="$1"
   local tb="$ROOT/.cache/$RUNTIME_ASSET"
+  local parts="${RUNTIME_ASSET_PARTS:-1}"
   mkdir -p "$ROOT/.cache"
-  if [ -f "$tb" ] && [ -f "$ROOT/.cache/$RUNTIME_ASSET.sha256" ]; then
-    local want got; want="$(cat "$ROOT/.cache/$RUNTIME_ASSET.sha256")"
-    got="$(sha256_of "$tb")"
-    if [ "$got" = "$want" ]; then ok "复用已下载的 $(basename "$tb")"; else rm -f "$tb"; fi
-  fi
-  [ -f "$tb" ] || download "$url" "$tb"
-  local sidecar="$url.sha256"
-  if curl -fsL -o "$tb.sha256" "$sidecar" 2>/dev/null; then
-    local want; want="$(awk '{print $1}' "$tb.sha256")"
-    local got;  got="$(sha256_of "$tb")"
-    [ "$want" = "$got" ] || die "载荷 sha256 不符：$got ≠ $want"
-    ok "载荷 sha256 校验通过"
-    cp -f "$tb.sha256" "$ROOT/.cache/$RUNTIME_ASSET.sha256"
+
+  if [ "$parts" -gt 1 ]; then
+    # ---- 分卷下载 ----
+    # Release 附件单文件上限 2 GiB，而整包压缩后 2.06 GiB，所以按 config/release.env
+    # 切成了 $parts 卷。每卷单独校验，拼回整包后再校验一次整包。
+    log "载荷分 $parts 卷下载（GitHub Release 附件单文件上限 2 GiB）"
+    local i part purl want got
+    for i in $(seq 1 "$parts"); do
+      part="$tb.part$i"; purl="$url.part$i"
+      if [ -f "$part" ] && [ -f "$part.sha256" ] \
+         && [ "$(sha256_of "$part")" = "$(awk '{print $1}' "$part.sha256")" ]; then
+        ok "复用已下载的 $(basename "$part")"
+        continue
+      fi
+      rm -f "$part" "$part.sha256"
+      download "$purl" "$part" || die "第 $i 卷下载失败（重跑本脚本会跳过已下好的卷）：$purl"
+      if curl -fsL -o "$part.sha256" "$purl.sha256" 2>/dev/null; then
+        want="$(awk '{print $1}' "$part.sha256")"; got="$(sha256_of "$part")"
+        [ "$want" = "$got" ] || { rm -f "$part"; die "第 $i 卷 sha256 不符：$got ≠ $want"; }
+        ok "第 $i 卷 sha256 校验通过"
+      else
+        warn "第 $i 卷没有 .sha256，跳过单卷校验（整包还会校验一次）"
+      fi
+    done
+    # 显式循环合并。**不能用 "$tb".part* 通配符扩展**：part10 会排在 part2 前面。
+    log "合并 $parts 卷 → $(basename "$tb")"
+    : > "$tb"
+    for i in $(seq 1 "$parts"); do cat "$tb.part$i" >> "$tb"; done
   else
-    warn "没有找到 $sidecar，跳过下载校验（解包后会用已知指纹校验）"
+    # ---- 单文件下载（保留原行为）----
+    if [ -f "$tb" ] && [ -f "$ROOT/.cache/$RUNTIME_ASSET.sha256" ]; then
+      local w g; w="$(cat "$ROOT/.cache/$RUNTIME_ASSET.sha256")"; g="$(sha256_of "$tb")"
+      if [ "$g" = "$w" ]; then ok "复用已下载的 $(basename "$tb")"; else rm -f "$tb"; fi
+    fi
+    [ -f "$tb" ] || download "$url" "$tb"
+  fi
+
+  # ---- 整包校验 ----
+  if curl -fsL -o "$tb.sha256" "$url.sha256" 2>/dev/null; then
+    local want got
+    want="$(awk '{print $1}' "$tb.sha256")"; got="$(sha256_of "$tb")"
+    [ "$want" = "$got" ] || die "载荷 sha256 不符：$got ≠ $want"
+    ok "整包 sha256 校验通过"
+    # --url 模式下 $tb.sha256 和缓存侧车就是同一个文件，cp 会报"为同一文件"
+    local sidecar_cache="$ROOT/.cache/$RUNTIME_ASSET.sha256"
+    [ "$tb.sha256" = "$sidecar_cache" ] || cp -f "$tb.sha256" "$sidecar_cache"
+  else
+    warn "没有找到 $url.sha256，跳过下载校验（解包后会用已知指纹校验）"
   fi
   extract_tarball "$tb" "$RUNTIME"
+  # 分卷模式下各卷才是权威副本，合并出来的整包能随时重建，却占 2 GB —— 解包完就删。
+  if [ "$parts" -gt 1 ]; then rm -f "$tb"; fi
 }
 
 main() {

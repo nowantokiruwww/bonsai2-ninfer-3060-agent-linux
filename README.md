@@ -94,10 +94,10 @@ CUDA 运行库（cuBLAS / nvJitLink / cudart）随引擎载荷一起发，由 `L
 ## 五分钟开始
 
 ```bash
-git clone https://github.com/<你的用户名>/bonsai2-ninfer-3060-agent-linux.git
+git clone https://github.com/nowantokiruwww/bonsai2-ninfer-3060-agent-linux.git
 cd bonsai2-ninfer-3060-agent-linux
 
-./install.sh          # ① 引擎载荷（2.6 GB，Release 附件） ② 模型（9.5 GB，HF 镜像） ③ 自检
+./install.sh          # ① 引擎载荷（2.6 GB，分 2 卷）② 模型（9.5 GB，HF 镜像）③ 自检
 ./start.sh            # 启动，约 35 秒
 ./webui.sh            # 浏览器打开 http://127.0.0.1:8099
 ```
@@ -116,14 +116,43 @@ cd bonsai2-ninfer-3060-agent-linux
 
 | 东西 | 体积 | 放在哪 |
 |---|---|---|
-| 引擎载荷（3 个二进制 + 4 个 CUDA 运行库 + 标定 profile） | 2.6 GB | GitHub **Release 附件**，`fetch-runtime.sh` 取回 |
+| 引擎载荷（3 个二进制 + 4 个 CUDA 运行库 + 标定 profile） | 2.6 GB | GitHub **Release 附件**，切成 2 卷，`fetch-runtime.sh` 取回 |
 | 模型权重 `.ninfer` | 9.5 GB | HuggingFace 镜像，`fetch-model.sh` 取回 |
 | 源码 / 脚本 / 文档 | 5 MB | **就在仓库里** |
 
-GitHub 单文件上限 100 MB，所以 2.6 GB 和 9.5 GB 都进不了 git —— 这是平台限制，不是偷懒。
+两个不同的平台限制，别搞混：
+
+- **git 仓库**单文件上限 **100 MB** → 2.6 GB 和 9.5 GB 都进不了 git，这是为什么它们要外挂。
+- **Release 附件**单文件上限 **2 GiB**（[官方文档](https://docs.github.com/en/repositories/releasing-projects-on-github/about-releases)：*"must be under 2 GiB"*）
+  → 载荷压缩后是 **2.06 GiB，正好超**，所以被切成 `…tar.zst.part1` / `…part2` 两卷。
+
+分卷是纯粹的托管绕开手段，**没有删掉任何东西**。下载端会拼回整包再校验整包的 sha256，
+单卷坏了只需重下那一卷（重跑 `./scripts/fetch-runtime.sh` 会跳过已下好的卷）。
 
 **但仓库是自包含的**：所有脚本、所有路径都相对仓库根解析，不存在"只有作者本机才有"的依赖。
 `./scripts/verify.sh` 会把这件事当成断言来检查。
+
+<details>
+<summary><b>维护者：重新打一个 Release（普通用户不用看）</b></summary>
+
+改过 `runtime/` 里的东西（比如换了引擎构建）之后，才需要重发载荷：
+
+```bash
+./scripts/make-release.sh                    # 压缩 + 切卷 → dist/
+export GITHUB_TOKEN=ghp_xxxxxxxx             # classic PAT，勾 repo 这一个 scope 就够
+./scripts/publish-release.sh                 # 建 Release（若不存在）+ 传附件
+```
+
+`publish-release.sh` 会自己判断哪些附件已经传过并跳过，**传断了直接重跑就续传**。
+它还会硬拦超过 2 GiB 的单文件——真超了就调大 `config/release.env` 里的
+`RUNTIME_ASSET_PARTS` 再重跑 `make-release.sh`。
+
+> **代理提醒**：能打开 GitHub 网页 ≠ `curl`/`git` 能通。浏览器读 GNOME 的代理设置，
+> 命令行工具不读。要设 `export https_proxy=http://127.0.0.1:7890`（换成你自己的端口）。
+> `git` 那边可以用 `git config --global http.https://github.com/.proxy http://127.0.0.1:7890`
+> —— 只对 github.com 生效，不影响别的仓库。
+
+</details>
 
 ---
 
@@ -163,20 +192,30 @@ GitHub 单文件上限 100 MB，所以 2.6 GB 和 9.5 GB 都进不了 git ——
 
 ```
   API      http://127.0.0.1:8098/v1
-  API      http://192.168.1.201:8098/v1      ← 笔记本用这个
+  API      http://192.168.1.23:8098/v1      ← 笔记本用这个
 ```
 
-网页控制台里也能直接看到完整地址并一键复制。
-
-> `--lan` 只管这一次启动，不会写进 `config/runtime.env`（和其他 `./start.sh --xxx`
-> 覆盖一样）。想让它长期生效，用网页控制台里的「局域网」开关 + 「保存到 config」，
-> 或者直接改 `config/runtime.env` 里的 `HOST`。默认值是安全的 `127.0.0.1` ——
-> 也就是说**重启之后会自动关回去**，这是故意的。
+> ⚠ `192.168.1.23` 只是**示例**。你跑的时候这里打印的是**你自己台式机的局域网 IP**，
+> 每台机器都不一样（`192.168.x.x` / `10.x.x.x` / `172.16-31.x.x` 这些是内网地址段）。
+> 网页控制台里也能直接看到完整地址并一键复制，不用自己猜。
+>
+> **这不会把你的电脑暴露到公网。** `--lan` 做的是让引擎绑本机的所有网卡，
+> 效果是"同一个路由器/交换机下面的设备能连" —— 笔记本、手机、同一 WiFi 上的人。
+> 公网上的机器**连不上** `192.168.x.x`（这类地址不可路由，运营商的骨干网直接丢弃）。
+> 唯一会变成公网可访问的情况是你在**路由器上做了端口转发 / 开了 UPnP** 把 8098 映射出去，
+> 那是路由器侧的设置，本项目不做也不会替你做。
+>
+> 真正要警惕的是**同一个网吧/宿舍/办公室的 WiFi**：那里的人算"同一局域网"。
+> 而且 `--lan` **只管这一次启动**，不会写进 `config/runtime.env`（和其他
+> `./start.sh --xxx` 覆盖一样）。想让它长期生效，用网页控制台里的「局域网」开关 +
+> 「保存到 config」，或者直接改 `config/runtime.env` 里的 `HOST`。默认值是安全的
+> `127.0.0.1`（只有本机能连）—— 也就是说**重启之后会自动关回去**，这是故意的。
 
 **笔记本（客户端）：**
 
 ```bash
-export OPENAI_BASE_URL=http://192.168.1.201:8098/v1
+# 把下面的地址换成台式机 ./start.sh --lan 打印出来的那一条
+export OPENAI_BASE_URL=http://192.168.1.23:8098/v1
 export OPENAI_API_KEY=not-needed      # 引擎不校验 key，随便填
 ```
 
@@ -189,7 +228,7 @@ export OPENAI_API_KEY=not-needed      # 引擎不校验 key，随便填
 ./restart.sh --local      # 绑回 127.0.0.1
 ```
 
-防火墙（如果用 ufw）：
+防火墙（如果用 ufw）—— `192.168.1.0/24` 换成你自己的网段：
 
 ```bash
 sudo ufw allow from 192.168.1.0/24 to any port 8098 proto tcp
@@ -414,11 +453,12 @@ bonsai2-ninfer-3060-agent-linux/
 │   ├── fetch-model.sh          取模型（HF 镜像，断点续传 + sha256）
 │   ├── install-service.sh      systemd 用户服务
 │   ├── verify.sh               自检：证明仓库自包含
-│   └── make-release.sh         打 Release 附件
+│   ├── make-release.sh         打 Release 附件（压缩 + 分卷）
+│   └── publish-release.sh      把附件传到 GitHub Release（要 GITHUB_TOKEN）
 │
 ├── config/
 │   ├── runtime.env             运行配置（唯一调参入口，install 时生成）
-│   └── release.env             下载地址（把 OWNER 改成你的 GitHub 用户名）
+│   └── release.env             下载地址（默认已指向本仓库 Release，一般不用改）
 │
 ├── docker/
 │   ├── Dockerfile              运行镜像（131 个系统依赖的精确闭包）

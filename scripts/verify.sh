@@ -150,6 +150,49 @@ fi
 chk "docs/AGENT-EXPERIENCE.md §13.2 引用的是生产档（$b_install）" test "$b_doc" = "$b_install"
 echo
 
+# --- 5c. 本机自己的 IP 不许出现在文档里 --------------------------------
+#
+# 起因：README 与 docs/DOCKER.md 里把作者本机的局域网地址 `192.168.1.201`
+# 当成了示例输出。它不会泄漏什么秘密（那是不可路由的内网地址），但**会误导读者** ——
+# 有人真的以为那是"自己电脑的网址"，或者反过来以为自己被暴露到公网了。
+# 示例必须用明显是占位的地址（`192.168.1.23`）或写清楚"这是你自己的"。
+#
+# 这个检查刻意**不硬编码**作者那台机器的地址，而是问本机"你的局域网地址是什么"，
+# 然后断言它们不出现在仓库文档里 —— 谁跑都一样，换台机器自动换一组地址。
+log "[5c/7] 本机 IP 没有写进文档"
+# shellcheck source=../app/env.sh
+if ( . "$ROOT/app/env.sh" 2>/dev/null && declare -F lan_ips >/dev/null ); then
+  # lan_ips 输出的是 "<网卡> <IP>" 两列，这里只要 IP（拿整行去 grep 永远匹配不上，
+  # 那会变成一条永远 PASS 的假检查 —— 第一版就是这么写错的，已修）
+  ips="$( (. "$ROOT/app/env.sh"; lan_ips) 2>/dev/null | awk '{print $NF}' | grep -vE '^$' || true )"
+else
+  ips="$(ip -4 -o addr show scope global 2>/dev/null | awk '{split($4,a,"/"); print a[1]}' \
+         | grep -vE '^(127\.|172\.1[0-9]\.|172\.2[0-9]\.|172\.3[01]\.|169\.254\.)' || true)"
+fi
+if [ -z "$ips" ]; then
+  warn "  没探到本机局域网地址（没有网卡？），这一组检查跳过"
+else
+  ipfail=0
+  while IFS= read -r ip; do
+    [ -n "$ip" ] || continue
+    # 只扫会被读者照着做的文档；ledger / 验收报告是历史记录，本来就会写当时的地址
+    h="$(grep -rn -- "$ip" "$ROOT/README.md" "$ROOT/docs" \
+          --include='*.md' \
+          --exclude='PORTING-LEDGER.md' --exclude='AGENT-EXPERIENCE.md' \
+          --exclude='LINEAGE.md' --exclude='METHODOLOGY.md' \
+          --exclude='TROUBLESHOOTING.md' --exclude='PARAMETERS.md' \
+          --exclude='REQUIREMENTS.md' --exclude='REPORT-*.md' 2>/dev/null || true)"
+    h="$(printf '%s\n' "$h" | grep -v '^$' | grep -v 'verify:allow-outside-path' || true)"
+    if [ -n "$h" ]; then
+      printf '%s[FAIL]%s 本机地址 %s 出现在文档里（示例请用 192.168.1.23 这类占位地址）：\n' "$C_R" "$C_0" "$ip"
+      printf '%s\n' "$h" | sed 's/^/    /'
+      ipfail=1
+    fi
+  done <<< "$ips"
+  chk "本机局域网地址（$(printf '%s' "$ips" | tr '\n' ' ' | sed 's/ $//')）没有出现在文档里" test "$ipfail" = 0
+fi
+echo
+
 # --- 6. README 里出现的命令，脚本都存在 --------------------------------
 log "[6/7] README 命令可解析"
 cmds="$(grep -oE '\./[A-Za-z0-9_.-]+(/[A-Za-z0-9_.-]+)?\.sh' "$ROOT/README.md" 2>/dev/null | sort -u || true)"
