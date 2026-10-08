@@ -1,0 +1,93 @@
+# ===========================================================================
+#  docker compose 用法（可选，等价于 ./docker/run.sh）
+# ===========================================================================
+#
+#  用之前先确认两件事：
+#
+#    1. compose 认得的 GPU 写法有两种。下面这份用的是**手工挂载**，
+#       因为它不需要 nvidia-container-toolkit —— 本项目默认的那条路。
+#       如果你的机器装了 toolkit，把 `devices:` 和那几个驱动库挂载删掉，
+#       换成：
+#           deploy:
+#             resources:
+#               reservations:
+#                 devices:
+#                   - driver: nvidia
+#                     count: all
+#                     capabilities: [gpu]
+#
+#    2. 把下面 `devices:` 里的 /dev/nvidia0 改成**你的 3060** 那一个节点。
+#       不知道是哪个？在宿主机上跑：
+#           for d in /proc/driver/nvidia/gpus/*/information; do
+#             echo "$d"; grep -E 'Model|GPU UUID' "$d"; done
+#       对照 `nvidia-smi -L` 找到 3060 的 UUID，再看它挂在哪个 nvidiaN 上。
+#       本项目绝不按序号猜 —— CUDA 的设备序和 nvidia-smi 是反的。
+#
+#  用法：
+#      docker compose -f docker/compose.yml up          # 前台
+#      docker compose -f docker/compose.yml up -d       # 后台
+#      docker compose -f docker/compose.yml logs -f
+#      docker compose -f docker/compose.yml down
+#
+# ===========================================================================
+
+services:
+  ninfer:
+    image: bonsai2-ninfer-3060:0.1.0
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      args:
+        BASE: ubuntu:24.04
+        WITH_MODEL: "0"
+    container_name: bonsai2-ninfer-3060
+    init: true
+    restart: unless-stopped
+
+    # --- 让容器看得见显卡（无 toolkit 方案）--------------------------------
+    devices:
+      - /dev/nvidiactl
+      - /dev/nvidia-uvm
+      - /dev/nvidia-uvm-tools
+      - /dev/nvidia-modeset
+      - /dev/nvidia0            # ← 改成你的 3060
+
+    # 驱动用户态库必须来自宿主机（内核模块与用户态版本必须一致）。
+    # 版本号按你的驱动改： ls /usr/lib/x86_64-linux-gnu/libcuda.so.*
+    volumes:
+      - /usr/lib/x86_64-linux-gnu/libcuda.so.580.178.04:/usr/lib/x86_64-linux-gnu/libcuda.so.1:ro
+      - /usr/lib/x86_64-linux-gnu/libnvidia-ptxjitcompiler.so.580.178.04:/usr/lib/x86_64-linux-gnu/libnvidia-ptxjitcompiler.so.1:ro
+      - /usr/lib/x86_64-linux-gnu/libnvidia-nvvm.so.580.178.04:/usr/lib/x86_64-linux-gnu/libnvidia-nvvm.so.4:ro
+      - /usr/lib/x86_64-linux-gnu/libnvidia-ml.so.580.178.04:/usr/lib/x86_64-linux-gnu/libnvidia-ml.so.1:ro
+      - /usr/bin/nvidia-smi:/usr/bin/nvidia-smi:ro
+      # 模型与日志
+      - ../models:/app/models:ro
+      - ../logs:/app/logs
+
+    ports:
+      # 只绑回环 = 只有本机能连。想让笔记本连过来，把两行前面的
+      # "127.0.0.1:" 去掉（变成所有网卡都开），同时把下面的
+      # BONSAI_LAN_EXPOSED 改成 "1"、BONSAI_ADVERTISE_IP 填上本机局域网地址，
+      # 否则容器会报自己的桥接地址（172.17.x.x），对笔记本没有用。
+      #   ⚠ 引擎和控制台都没有鉴权，开出去 = 同网段的人都能白用这张显卡。
+      - "127.0.0.1:8098:8098"   # 引擎 API
+      - "127.0.0.1:8099:8099"   # 网页控制台
+
+    environment:
+      GPU_UUID: GPU-de9cb363-62f6-d10e-9cd0-26d071ac1974   # ← 改成你的 3060
+      HOST: 0.0.0.0
+      PORT: "8098"
+      # 容器里引擎必须绑 0.0.0.0，所以「到底有没有开给局域网」得由外面告诉它。
+      # 端口映射只绑了回环就是 "0"；去掉 "127.0.0.1:" 之后改成 "1"。
+      BONSAI_LAN_EXPOSED: "0"
+      # 开局域网时填宿主机地址（ip route get 1.1.1.1 | grep -o 'src [0-9.]*'）
+      # BONSAI_ADVERTISE_IP: "192.168.1.201"
+      # 想换 KV、思考预算这些，最省事的办法是挂一份自己的 runtime.env：
+      #   - ./my-runtime.env:/app/config/runtime.env:ro
+
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8098/v1/models"]
+      interval: 30s
+      timeout: 5s
+      start_period: 120s    # 首次加载权重约 30 秒，给足余量
+      retries: 3

@@ -61,6 +61,20 @@ http_code() {
   curl -s -o /dev/null -w '%{http_code}' -m 3 "$1" 2>/dev/null || echo 000
 }
 
+# 把"这个服务现在能被谁访问"讲清楚。
+# 引擎没有鉴权，所以绑 0.0.0.0 时必须把后果说在前面，而不是藏在配置里。
+show_access() {
+  local host="$1" port="$2" u
+  while IFS= read -r u; do
+    [ -n "$u" ] || continue
+    printf '  API      %s/v1\n' "$u"
+  done < <(urls_for_bind "$host" "$port")
+  if is_lan_exposed "$host"; then
+    printf '  \033[33m⚠ 绑定 0.0.0.0：引擎没有鉴权，同一局域网里任何人都能白用这张显卡，\033[0m\n'
+    printf '  \033[33m  也能看到 logs/request.jsonl 里的全部请求内容。要收回就 ./restart.sh --local\033[0m\n'
+  fi
+}
+
 wait_ready() {
   local host="$1" port="$2" timeout="${3:-300}" waited=0 code
   while [ "$waited" -lt "$timeout" ]; do
@@ -68,9 +82,10 @@ wait_ready() {
       echo "[fail] 引擎进程已退出（未就绪）—— 看日志：$SERVICE_LOG" >&2
       return 1
     fi
-    code="$(http_code "http://$host:$port/v1/models")"
+    code="$(http_code "http://127.0.0.1:$port/v1/models")"
     if [ "$code" = "200" ]; then
-      ok "就绪（${waited}s）：http://$host:$port/v1"
+      ok "就绪（${waited}s）"
+      show_access "$host" "$port"
       return 0
     fi
     sleep 2; waited=$((waited + 2))
@@ -190,6 +205,11 @@ start_engine() {
   echo "  采样     : ${P_SAMPLE:-v100}"
   echo "  投机     : $spec"
   echo "  KV       : $kv_dtype @ $kv_cap"
+  if is_lan_exposed "$host"; then
+    echo "  监听     : $host:$port  "$'\033[33m'"（局域网可访问 · 无鉴权）"$'\033[0m'
+  else
+    echo "  监听     : $host:$port  （仅本机）"
+  fi
   echo "  锁卡     : ${CUDA_VISIBLE_DEVICES:-<未锁>}  $(gpu_name_of_uuid "${CUDA_VISIBLE_DEVICES:-}")"
   echo "  日志     : ${SERVICE_LOG#"$ROOT"/}"
   echo "  命令     :"
@@ -278,6 +298,17 @@ do_status() {
     printf '"model":"%s",' "$MODEL_ID"
     printf '"log_bytes":%s,' "$(stat -c %s "$SERVICE_LOG" 2>/dev/null || echo 0)"
     printf '"req_log_bytes":%s,' "$(stat -c %s "$REQ_LOG" 2>/dev/null || echo 0)"
+    printf '"api_base":"http://127.0.0.1:%s/v1",' "$port"
+    printf '"urls":['
+    local first=1 u
+    while IFS= read -r u; do
+      [ -n "$u" ] || continue
+      [ "$first" = "1" ] || printf ','
+      printf '"%s/v1"' "$u"
+      first=0
+    done < <(urls_for_bind "$host" "$port")
+    printf '],'
+    if is_lan_exposed "$host"; then printf '"lan_exposed":true,'; else printf '"lan_exposed":false,'; fi
     printf '"root":"%s"' "$ROOT"
     printf '}\n'
     return 0
@@ -285,7 +316,8 @@ do_status() {
 
   if [ "$running" = "true" ]; then
     ok "运行中  pid=$pid  已运行 ${uptime_s}s"
-    echo "  端点      http://$host:$port/v1  →  http=$endpoint"
+    show_access "$host" "$port"
+    echo "  探活      http= $endpoint"
     echo "  模型      $MODEL_ID"
     echo "  KV        ${kv_dtype:-?} @ ${kv_cap:-?}"
     echo "  思考      $think ${effort:+effort=$effort }${budget:+budget=$budget}"
@@ -323,6 +355,10 @@ bonsai2-ninfer-3060-agent-linux —— 引擎启停与日志
   --kv-dtype NAME  KV 量化（默认 $KV_DTYPE）
   --port N         端口（默认 $PORT）
   --host ADDR      监听地址（默认 $HOST）
+  --lan            绑 0.0.0.0，让局域网里的别的机器连过来
+                   ⚠ 引擎没有鉴权 —— 等同于把显卡借给整个局域网
+                   只管这一次启动，不会写进 config/runtime.env
+  --local          绑回 127.0.0.1（收回上面的开放）
   --spec "..."     投机参数（默认 "$SPEC_FLAGS"）
   --extra "..."    追加任意引擎参数
   --foreground     前台运行（systemd 用）
@@ -343,6 +379,8 @@ parse_args() {
       --kv-dtype)   KV_DTYPE_OV="$2"; shift 2 ;;
       --port)       PORT_OV="$2"; shift 2 ;;
       --host)       HOST_OV="$2"; shift 2 ;;
+      --lan)        HOST_OV="0.0.0.0"; shift ;;
+      --local)      HOST_OV="127.0.0.1"; shift ;;
       --spec)       SPEC_OV="$2"; shift 2 ;;
       --extra)      EXTRA_OV="$2"; shift 2 ;;
       --foreground|-f) FOREGROUND=1; shift ;;
@@ -401,6 +439,9 @@ main() {
       if [ "$f" = "1" ]; then tail -n "$n" -F "$SERVICE_LOG"; else tail -n "$n" "$SERVICE_LOG"; fi
       ;;
     check)   load_runtime_env; preflight && ok "前置检查通过" ;;
+    urls)    # 给 webui 用：一个 bind 地址对外意味着哪些 URL（单一事实源在 env.sh）
+             load_runtime_env
+             urls_for_bind "${1:-$HOST}" "${2:-$PORT}" ;;
     cmd)     parse_args "$@"; load_runtime_env
              build_cmd "${HOST_OV:-$HOST}" "${PORT_OV:-$PORT}" "${KV_DTYPE_OV:-$KV_DTYPE}" \
                        "${KV_CAP_OV:-$KV_CAPACITY}" "${SPEC_OV:-$SPEC_FLAGS}" "${EXTRA_OV:-$EXTRA_FLAGS}"

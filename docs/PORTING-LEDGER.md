@@ -902,6 +902,91 @@ $ bash scripts/86-verify-live-match.sh
 
 ---
 
+## L31 heredoc 没闭合 → 代码被当成**文本**写进配置文件，而不执行（2026-10-08）
+
+**症状。** 容器跑起来看着一切正常：引擎绑 `0.0.0.0`、`/v1/models` 200、
+真实请求能出结果、webUI 也能开。唯一不对劲的是容器日志里孤零零两行：
+
+```
+/app/docker/entrypoint.sh: line 189: urls_for_bind: command not found
+/app/docker/entrypoint.sh: line 196: is_lan_exposed: command not found
+```
+
+这两个函数明明定义在 `app/env.sh` 里，而 `docker/entrypoint.sh:112` 就写着
+`. "$ROOT/app/env.sh"`。
+
+**根因。** `docker/entrypoint.sh:96` 的 `cat > "$ENVF" <<EOF` **一直到 `:132` 才 EOF**，
+而 `:103–:131` 本该是**要执行的语句**：
+
+```sh
+cat > "$ENVF" <<EOF
+# …注释…
+HOST=${HOST:-0.0.0.0}        # ← 这几行不是数据，是代码
+PORT=${PORT:-8098}
+MODEL_ID=${MODEL_ID:-bonsai2-27b}
+. "$ROOT/app/env.sh"         # ← 元凶
+GPU_UUID=$GPU_UUID
+KV_DTYPE=${KV_DTYPE:-rk2v4-e8}
+SPEC_FLAGS="${SPEC_FLAGS:---spec dflash2 --draft-tokens 7}"
+EXTRA_FLAGS="${EXTRA_FLAGS:---max-concurrency 1 … $ROOT/logs/request.jsonl}"
+EOF
+```
+
+它们全被当作**文本写进了 `config/runtime.env`**。
+
+**为什么没炸、反而"能用"。** 两件事凑巧救了它：
+
+1. 未加引号的 heredoc 会做参数展开，`${KV_DTYPE:-rk2v4-e8}` 在**写入时**就被替换成
+   `rk2v4-e8` —— 所以生成的 `runtime.env` 内容**恰好是对的**，引擎读到的配置没毛病。
+2. `. "/app/app/env.sh"` 这行作为**文本**落在了 `runtime.env` 里，
+   而 `app/launcher.sh:21` 会 source 这份文件 → **launcher 反倒意外拿到了那两个函数**
+   （所以 `start_engine` 里的 `show_access` 打印三条 API 地址完全正常），
+   只有 `entrypoint.sh` 自己从头到尾没 source 到 env.sh。
+
+**这就是它难发现的原因：坏掉的那一半被另一半的巧合掩盖了。**
+错误信息只在 `start_webui()`（唯一的、直接调用 env.sh 函数的地方）里冒出来两行。
+
+**修法。** 把 heredoc 恢复成**纯数据**，所有语句移到 `EOF` 之后；
+默认值用 `: "${KV_DTYPE:=rk2v4-e8}"` 这类写法在 heredoc **之前**算好，
+heredoc 里只写 `${KV_DTYPE}`：
+
+```sh
+: "${KV_DTYPE:=rk2v4-e8}"
+: "${SPEC_FLAGS:=--spec dflash2 --draft-tokens 7}"
+. "$ROOT/app/env.sh"
+cat > "$ENVF" <<EOF
+HOST=${HOST}
+KV_DTYPE=${KV_DTYPE}
+SPEC_FLAGS="${SPEC_FLAGS}"
+EOF
+```
+
+并加一条**自检**，让同类错误以后响亮地死掉而不是静默降级：
+
+```sh
+. "$ROOT/app/env.sh"
+command -v urls_for_bind >/dev/null 2>&1 \
+  || die "app/env.sh 没有被 source 到（urls_for_bind 未定义）"
+```
+
+**教训。**
+
+1. **`bash -n` 抓不到这个。** 脚本语法完全合法，坏的是**语义**（代码落在数据区里）。
+   "语法检查通过"不等于"这行会执行"。
+2. **heredoc 是执行流里的一个洞**。写长 heredoc 时，习惯性在 `EOF` 之后立刻
+   `echo`/`grep` 确认一下边界，或者干脆把模板挪进单独的文件
+   （`cat file.tmpl`）—— 那就根本没有"闭没闭合"这回事。
+3. **巧合能跑通 ≠ 设计对**。本例里"能用"完全依赖 heredoc 的展开时机和
+   `launcher.sh` 会 source 同一个文件这两个偶然事实。
+   判断一个改法是否安全，要看它**依赖了多少个巧合**。
+4. **调用外部函数前先 `command -v` 自检**，成本一行，
+   把"两行莫名其妙的 command not found"变成"一条带诊断的 die"。
+5. 顺带记下同一族的 L25：那个 heredoc 是**没加引号导致反引号被执行**。
+   同一份文件里两个 heredoc，一个"多执行了不该执行的"，一个"少执行了该执行的" ——
+   heredoc 的边界与引号是这类脚本里最值得盯的两处。
+
+---
+
 ## 工具链与环境事实（供 3080/3090 复用）
 
 | 项 | 本机实测 |

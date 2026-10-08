@@ -49,6 +49,10 @@ REQ_LOG = os.path.join(LOG_DIR, "request.jsonl")
 DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORT = 8099
 
+# 本控制台自己实际绑在哪儿（main() 里赋值）。/api/access 要用它算「别人怎么打开这个网页」。
+WEBUI_HOST = DEFAULT_HOST
+WEBUI_PORT = DEFAULT_PORT
+
 
 # ---------------------------------------------------------------------------
 # runtime.env 读写
@@ -158,6 +162,105 @@ def get_status(force=False):
             data = {"running": False, "error": (err or out or "status 失败").strip()}
         _status_cache.update(t=now, data=data)
         return data
+
+
+def get_urls(host, port):
+    """问 launcher 一个 bind 地址对外意味着哪些 URL（单一事实源在 app/env.sh）。"""
+    rc, out, _ = run_launcher(["urls", str(host), str(port)], timeout=10)
+    if rc == 0 and out.strip():
+        urls = [ln.strip() for ln in out.strip().splitlines() if ln.strip()]
+        if urls:
+            return urls
+    return ["http://127.0.0.1:%s" % port]
+
+
+_access_lock = threading.Lock()
+_access_cache = {"t": 0.0, "data": None}
+
+
+def get_access(force=False):
+    """「别人怎么连这台机器」的全部信息：完整 API 地址 + 可直接粘贴的代码片段。"""
+    with _access_lock:
+        now = time.time()
+        if not force and _access_cache["data"] and (now - _access_cache["t"]) < 5.0:
+            return _access_cache["data"]
+
+    st = get_status(force=force)
+    port = st.get("port") or 8098
+    model = st.get("model") or "bonsai2-27b"
+    exposed = bool(st.get("lan_exposed"))
+    engine_urls = st.get("urls") or ["http://127.0.0.1:%s/v1" % port]
+    local_base = "http://127.0.0.1:%s/v1" % port
+    lan_base = None
+    for u in engine_urls:
+        if "127.0.0.1" not in u and "localhost" not in u:
+            lan_base = u
+            break
+
+    # 给笔记本用的那一份，优先用局域网地址；没开 LAN 就退回本机地址
+    share_base = lan_base or local_base
+    snippets = {
+        "curl": (
+            "curl %s/chat/completions \\\n"
+            "  -H 'Content-Type: application/json' \\\n"
+            "  -d '{\"model\": \"%s\", \"messages\": [{\"role\": \"user\", \"content\": \"你好\"}]}'"
+        ) % (share_base, model),
+        "python_openai": (
+            "from openai import OpenAI\n\n"
+            "client = OpenAI(base_url=\"%s\", api_key=\"not-needed\")\n"
+            "resp = client.chat.completions.create(\n"
+            "    model=\"%s\",\n"
+            "    messages=[{\"role\": \"user\", \"content\": \"你好\"}],\n"
+            ")\n"
+            "print(resp.choices[0].message.content)"
+        ) % (share_base, model),
+        "python_requests": (
+            "import requests\n\n"
+            "resp = requests.post(\n"
+            "    \"%s/chat/completions\",\n"
+            "    json={\"model\": \"%s\", \"messages\": [{\"role\": \"user\", \"content\": \"你好\"}]},\n"
+            "    timeout=600,\n"
+            ")\n"
+            "print(resp.json()[\"choices\"][0][\"message\"][\"content\"])"
+        ) % (share_base, model),
+        "env": "export OPENAI_BASE_URL=%s\nexport OPENAI_API_KEY=not-needed" % share_base,
+    }
+
+    warning = None
+    if exposed:
+        warning = (
+            "引擎没有鉴权，也没有 TLS。现在监听在 %s，同一局域网里任何人都能连上来"
+            "白用这张显卡，也能对话；请只在自己信得过的网络里这么用，用完执行 "
+            "./restart.sh --local 收回来。"
+        ) % (st.get("host") or "0.0.0.0")
+
+    data = {
+        "model": model,
+        "engine": {
+            "local_base": local_base,
+            "lan_base": lan_base,
+            "urls": engine_urls,
+            "exposed": exposed,
+            "host": st.get("host") or "",
+            "port": port,
+        },
+        "webui": {
+            "host": WEBUI_HOST,
+            "port": WEBUI_PORT,
+            "urls": [u + "/" for u in get_urls(WEBUI_HOST, WEBUI_PORT)],
+        },
+        "snippets": snippets,
+        "warning": warning,
+        "note": (
+            "开思考时正文在 message.content，思考过程在 message.reasoning_content；"
+            "两个都读才算完整。引擎不发 CORS 头（实测 OPTIONS 预检返回 404），"
+            "所以只能给桌面客户端用（curl / Python / 各种本地客户端）——"
+            "浏览器里打开的第三方网页直接 fetch 会被拦住。"
+        ),
+    }
+    with _access_lock:
+        _access_cache.update(t=time.time(), data=data)
+    return data
 
 
 def get_gpus():
@@ -442,6 +545,8 @@ class Handler(BaseHTTPRequestHandler):
                 return self._json(get_status(force=("force" in q)))
             if path == "/api/gpus":
                 return self._json({"gpus": get_gpus()})
+            if path == "/api/access":
+                return self._json(get_access(force=("force" in q)))
             if path == "/api/presets":
                 return self._json({"presets": get_presets()})
             if path == "/api/config":
@@ -580,20 +685,36 @@ class Handler(BaseHTTPRequestHandler):
 
 
 def main():
+    global WEBUI_HOST, WEBUI_PORT
     ap = argparse.ArgumentParser(description="bonsai2-ninfer-3060-agent-linux 网页控制台")
     ap.add_argument("--host", default=DEFAULT_HOST)
     ap.add_argument("--port", type=int, default=DEFAULT_PORT)
+    ap.add_argument("--lan", action="store_true",
+                    help="绑 0.0.0.0，让局域网里别的机器也能打开这个控制台（无鉴权，慎用）")
+    ap.add_argument("--local", action="store_true",
+                    help="绑回 127.0.0.1（收回上面的开放）")
     args = ap.parse_args()
 
     if not os.path.isfile(LAUNCHER):
         sys.exit("找不到 %s" % LAUNCHER)
 
-    httpd = ThreadingHTTPServer((args.host, args.port), Handler)
+    host = args.host
+    if args.lan:
+        host = "0.0.0.0"
+    if args.local:
+        host = "127.0.0.1"
+
+    WEBUI_HOST, WEBUI_PORT = host, args.port
+
+    httpd = ThreadingHTTPServer((host, args.port), Handler)
     httpd.daemon_threads = True
-    url = "http://%s:%d/" % (args.host, args.port)
     print("bonsai2-ninfer-3060-agent-linux 网页控制台")
     print("  仓库根 : %s" % ROOT)
-    print("  地址   : %s" % url)
+    for u in get_urls(host, args.port):
+        print("  地址   : %s/" % u)
+    if host == "0.0.0.0":
+        print("  ⚠ 局域网可访问：这个控制台没有任何鉴权，"
+              "同网段的人都能启停引擎、读日志、看请求内容")
     print("  Ctrl+C 退出")
     try:
         httpd.serve_forever()

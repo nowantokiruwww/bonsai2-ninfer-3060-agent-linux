@@ -40,3 +40,6 @@ venv/
 # ---- 编辑器 ----
 .idea/
 .vscode/
+
+# docker/build.sh --with-model 的临时备份
+.dockerignore.bak-build

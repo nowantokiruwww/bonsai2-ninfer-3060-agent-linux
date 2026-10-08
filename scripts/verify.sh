@@ -62,7 +62,9 @@ echo
 log "[4/7] 可执行位"
 for f in install.sh start.sh stop.sh restart.sh status.sh logs.sh presets.sh check.sh webui.sh \
          app/launcher.sh scripts/fetch-runtime.sh scripts/fetch-model.sh \
-         scripts/install-service.sh scripts/verify.sh scripts/make-release.sh; do
+         scripts/install-service.sh scripts/verify.sh scripts/make-release.sh \
+         docker/build.sh docker/run.sh docker/entrypoint.sh; do
+  [ -e "$ROOT/$f" ] || continue          # docker/ 是可选的，缺了不算错
   chk "可执行 $f" test -x "$ROOT/$f"
 done
 echo
@@ -110,7 +112,7 @@ echo
 
 # --- 6. README 里出现的命令，脚本都存在 --------------------------------
 log "[6/7] README 命令可解析"
-cmds="$(grep -oE '\./(scripts/)?[A-Za-z0-9_.-]+\.sh' "$ROOT/README.md" 2>/dev/null | sort -u || true)"
+cmds="$(grep -oE '\./[A-Za-z0-9_.-]+(/[A-Za-z0-9_.-]+)?\.sh' "$ROOT/README.md" 2>/dev/null | sort -u || true)"
 if [ -z "$cmds" ]; then
   warn "  README 里没有解析到 ./*.sh 形式的命令"
 else

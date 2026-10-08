@@ -27,7 +27,9 @@
 - [硬件与系统要求](#硬件与系统要求)
 - [五分钟开始](#五分钟开始)
 - [网页控制台](#网页控制台)
+- [让笔记本用台式机的显卡](#让笔记本用台式机的显卡)
 - [命令行怎么用](#命令行怎么用)
+- [用 Docker 跑](#用-docker-跑)
 - [参数怎么调](#参数怎么调)
 - [速度的真相（先读这个）](#速度的真相先读这个)
 - [仓库结构](#仓库结构)
@@ -130,17 +132,78 @@ GitHub 单文件上限 100 MB，所以 2.6 GB 和 9.5 GB 都进不了 git ——
 ```bash
 ./webui.sh                # 默认 127.0.0.1:8099
 ./webui.sh --port 9000
+./webui.sh --lan          # 也让局域网里的笔记本打开（无鉴权，慎用）
 ```
 
-纯 Python 标准库实现，无第三方依赖，只监听本机回环地址。界面上有四块：
+纯 Python 标准库实现，无第三方依赖，默认只监听本机回环地址。界面上有五块：
 
-- **状态栏** —— 运行状态、pid、运行时长、KV 量化与容量、思考开关与预算、投机后端、显卡与空闲显存、端点 URL。
-- **控制区** —— 预设档位下拉（`balanced` / `fast` / `think` / `deep` / `greedy`），可覆盖 KV 容量、KV 量化、投机参数、端口和任意追加参数；「启动 / 停止 / 重启 / 保存到 config」四个按钮。启动是异步的，输出实时回流到界面。
+- **状态栏** —— 运行状态、pid、运行时长、**完整 API 地址**（带一键复制）、KV 量化与容量、思考开关与预算、投机后端、显卡与空闲显存。
+- **控制区** —— 预设档位下拉（`balanced` / `fast` / `think` / `deep` / `greedy`），可覆盖 KV 容量、KV 量化、投机参数、端口、**局域网开关**和任意追加参数；「启动 / 停止 / 重启 / 保存到 config」四个按钮。启动是异步的，输出实时回流到界面。
 - **日志区** —— `logs/service.log` 的实时流（SSE），带关键字高亮、自动滚动、暂停、下载。
 - **请求指标** —— 每个请求的 decode tok/s、投机接受率、思考 token 数、TTFT、`finish_reason`，5 秒刷新一次。
+- **接入方式** —— 本机 / 局域网的全部 API 地址，以及可以直接复制走的 curl、Python（openai 库）、Python（requests 库）和环境变量片段。
 
 再加一块折叠的**参数速查**，把「为什么中文散文到不了 120 tok/s」这类结论直接写进界面 ——
 免得再走一遍弯路。
+
+---
+
+## 让笔记本用台式机的显卡
+
+台式机插着 3060 出算力，笔记本连着它写代码 —— 这是这台机器最常见的用法。
+
+**台式机（服务端）：**
+
+```bash
+./start.sh --lan          # 引擎绑 0.0.0.0，并且打印出该用哪个地址
+./webui.sh --lan          # 控制台也一起对局域网开放（可选）
+```
+
+`./start.sh --lan` 会多打出一段：
+
+```
+  API      http://127.0.0.1:8098/v1
+  API      http://YOUR_LAN_IP:8098/v1      ← 笔记本用这个
+```
+
+网页控制台里也能直接看到完整地址并一键复制。
+
+> `--lan` 只管这一次启动，不会写进 `config/runtime.env`（和其他 `./start.sh --xxx`
+> 覆盖一样）。想让它长期生效，用网页控制台里的「局域网」开关 + 「保存到 config」，
+> 或者直接改 `config/runtime.env` 里的 `HOST`。默认值是安全的 `127.0.0.1` ——
+> 也就是说**重启之后会自动关回去**，这是故意的。
+
+**笔记本（客户端）：**
+
+```bash
+export OPENAI_BASE_URL=http://YOUR_LAN_IP:8098/v1
+export OPENAI_API_KEY=not-needed      # 引擎不校验 key，随便填
+```
+
+**⚠ 引擎没有任何鉴权，也没有 TLS** —— 这是上游引擎的设计，本项目没有在外面加壳。
+开了 `--lan` 就等于**把这张显卡借给整个局域网**：谁能连上谁就能用，网页控制台
+的日志和 `logs/request.jsonl` 里的请求内容也一样看得见。只在家里 / 自己信得过的
+网络里这么用。收回来：
+
+```bash
+./restart.sh --local      # 绑回 127.0.0.1
+```
+
+防火墙（如果用 ufw）：
+
+```bash
+sudo ufw allow from YOUR_LAN_CIDR4 to any port 8098 proto tcp
+sudo ufw allow from YOUR_LAN_CIDR4 to any port 8099 proto tcp
+```
+
+**一个实测出来的坑**：引擎**不发 CORS 头**（`OPTIONS` 预检直接返回 404）。
+所以笔记本这边要用 **桌面客户端** —— curl、Python、各种本地客户端都行；
+**浏览器里打开的第三方网页直接 `fetch` 这个地址会被浏览器拦下来**，
+报的是看不懂的 CORS 错误。这不是配置问题，引擎没实现。
+
+Docker 下是同一套东西，`./docker/run.sh --lan` 会自动把宿主机的局域网地址
+探出来传给容器（容器自己只看得见 `172.17.x.x` 的桥接地址，报出来没用）。
+细节见 [docs/DOCKER.md](docs/DOCKER.md#让局域网里的别的机器连过来)。
 
 ---
 
@@ -152,7 +215,9 @@ GitHub 单文件上限 100 MB，所以 2.6 GB 和 9.5 GB 都进不了 git ——
 ./start.sh                          # 后台起 + 等就绪
 ./start.sh --preset fast            # 换预设档
 ./start.sh --ctx 76768              # 覆盖上下文（= KV 容量）
-./status.sh                         # 看状态
+./start.sh --lan                    # 绑 0.0.0.0，让局域网连过来（⚠ 无鉴权）
+./restart.sh --local                # 绑回 127.0.0.1
+./status.sh                         # 看状态（含全部可访问地址）
 ./status.sh --json                  # 机器可读
 ./logs.sh -f                        # 跟日志
 ./stop.sh                           # 停止（SIGTERM，约 5 秒）
@@ -189,6 +254,37 @@ unit 里的路径是**安装时烘焙**的本仓库绝对路径，所以仓库�
 
 > unit 用的是 `KillSignal=SIGTERM`，不是默认的 `SIGINT`。
 > 引擎的 `SIGINT` 处理要求「5 秒内按两次 Ctrl+C」，用 `SIGINT` 会导致每次停止都干等 60 秒超时再被 `SIGKILL`。
+
+---
+
+## 用 Docker 跑
+
+```bash
+./scripts/fetch-runtime.sh --auto                    # 先让仓库有引擎
+./docker/build.sh --base docker.m.daocloud.io/library/ubuntu:24.04
+./docker/run.sh                                      # 前台跑起来
+./docker/run.sh --lan -d                             # 或者：让笔记本连过来
+```
+
+实测镜像 **5.45 GB**（`--with-model` 的胖镜像 **22.7 GB**）。
+
+打开 <http://127.0.0.1:8099/> 就是同一个网页控制台。
+模型从宿主机 `models/` 挂进去（只读），日志写到宿主机 `logs/`，**容器删掉日志还在**。
+
+镜像里**有**引擎载荷（727 MB 二进制 + 4 个 CUDA 运行库 + 标定文件）和
+131 个系统依赖库；**没有**驱动、没有 9.5 GB 权重、没有编译器 ——
+镜像是运行镜像，不在容器里编译。
+
+没装 `nvidia-container-toolkit` 也能跑：`docker/run.sh` 会自动退回到
+「手工挂 `/dev/nvidia*` + 挂宿主机驱动库」的方案，并在启动时告诉你走了哪条路。
+两条路都**按 UUID 锁卡**，绝不按序号。
+
+`./docker/run.sh --lan` 会和裸机的 `./start.sh --lan` 一样把端口开给局域网，
+区别是它会**把宿主机的真实局域网地址探出来传给容器** —— 容器自己只看得见
+`172.17.x.x` 的桥接地址，报出来对笔记本没用。
+
+细节（依赖闭包怎么算出来的、为什么引擎故意不做 PID 1、compose、排错）见
+[`docs/DOCKER.md`](docs/DOCKER.md)。
 
 ---
 
@@ -324,11 +420,19 @@ bonsai2-ninfer-3060-agent-linux/
 │   ├── runtime.env             运行配置（唯一调参入口，install 时生成）
 │   └── release.env             下载地址（把 OWNER 改成你的 GitHub 用户名）
 │
+├── docker/
+│   ├── Dockerfile              运行镜像（131 个系统依赖的精确闭包）
+│   ├── entrypoint.sh           容器选卡 / 生成配置 / 起进程并收尾
+│   ├── run.sh                  宿主机侧启动器（自动在 --gpus 与手工挂载间选路）
+│   ├── build.sh                构建（--base / --with-model）
+│   └── compose.yml             等价的 compose 写法
+│
 ├── docs/
 │   ├── REQUIREMENTS.md         环境依赖逐条说明
 │   ├── PARAMETERS.md           参数调优指南
 │   ├── TROUBLESHOOTING.md      常见问题
-│   ├── PORTING-LEDGER.md       ★ 30 条移植病历（最有价值的一份）
+│   ├── DOCKER.md               容器：依赖怎么算的、为什么引擎不做 PID 1
+│   ├── PORTING-LEDGER.md       ★ 31 条移植病历（最有价值的一份）
 │   ├── AGENT-EXPERIENCE.md     agent 场景验收（A1–A8）
 │   ├── LINEAGE.md              上游血缘：哪个 fork、哪个 commit、为什么
 │   ├── METHODOLOGY.md          方法论：怎么保证结论可信
@@ -399,10 +503,11 @@ bonsai2-ninfer-3060-agent-linux/
 
 | 文档 | 内容 |
 |---|---|
-| [`docs/PORTING-LEDGER.md`](docs/PORTING-LEDGER.md) | **30 条移植病历** —— 每一条都是真实踩过的坑：现象、根因、解法、证据、通用教训 |
+| [`docs/PORTING-LEDGER.md`](docs/PORTING-LEDGER.md) | **31 条移植病历** —— 每一条都是真实踩过的坑：现象、根因、解法、证据、通用教训 |
 | [`docs/REQUIREMENTS.md`](docs/REQUIREMENTS.md) | 环境依赖逐条说明与检查命令 |
 | [`docs/PARAMETERS.md`](docs/PARAMETERS.md) | 参数调优：两个维度、预设档、实测矩阵 |
 | [`docs/TROUBLESHOOTING.md`](docs/TROUBLESHOOTING.md) | 常见问题与排查顺序 |
+| [`docs/DOCKER.md`](docs/DOCKER.md) | 容器运行：依赖闭包怎么算、显卡怎么进容器、为什么引擎不做 PID 1、compose |
 | [`docs/AGENT-EXPERIENCE.md`](docs/AGENT-EXPERIENCE.md) | agent 场景验收 A1–A8（工具调用、长上下文、稳定性、复读门禁） |
 | [`docs/LINEAGE.md`](docs/LINEAGE.md) | 上游血缘：`Neroued/ninfer` → … → `iamwavecut/ninfer-all`，以及为什么必须换源码线 |
 | [`docs/METHODOLOGY.md`](docs/METHODOLOGY.md) | 方法论：去黑盒化、可重放、三道门禁 |

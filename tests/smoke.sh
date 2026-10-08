@@ -51,6 +51,22 @@ step "4. 端点"
 CODE="$(curl -s -o /dev/null -w '%{http_code}' -m 5 http://127.0.0.1:8098/v1/models || echo 000)"
 chk "/v1/models 返回 200（拿到 $CODE）" test "$CODE" = "200"
 
+step "4b. 地址信息（网页控制台靠这几个字段显示完整 API 地址）"
+SJ="$(bash "$ROOT/app/launcher.sh" status --json 2>/dev/null || echo '{}')"
+chk "status --json 含 api_base"    bash -c "printf '%s' '$SJ' | grep -q '\"api_base\"'"
+chk "status --json 含 urls"        bash -c "printf '%s' '$SJ' | grep -q '\"urls\"'"
+chk "status --json 含 lan_exposed" bash -c "printf '%s' '$SJ' | grep -q '\"lan_exposed\"'"
+chk "默认只绑本机（lan_exposed=false）" \
+    bash -c "printf '%s' '$SJ' | grep -q '\"lan_exposed\":false'"
+chk "局域网地址能算出来（urls_for_bind 0.0.0.0）" \
+    bash -c "test \"\$(bash '$ROOT/app/launcher.sh' urls 0.0.0.0 8098 | wc -l)\" -ge 1"
+chk "只绑 127.0.0.1 时不该出现局域网地址" \
+    bash -c "test \"\$(bash '$ROOT/app/launcher.sh' urls 127.0.0.1 8098 | wc -l)\" -eq 1"
+chk "BONSAI_LAN_EXPOSED=1 能推翻 bind 地址判断" \
+    bash -c "BONSAI_LAN_EXPOSED=1 bash -c '. \"$ROOT/app/env.sh\"; is_lan_exposed 127.0.0.1'"
+chk "BONSAI_LAN_EXPOSED=0 能推翻 bind 地址判断" \
+    bash -c "! BONSAI_LAN_EXPOSED=0 bash -c '. \"$ROOT/app/env.sh\"; is_lan_exposed 0.0.0.0'"
+
 step "5. 发一个真实请求"
 BODY='{"model":"bonsai2-27b","messages":[{"role":"user","content":"用一句话说明什么是三元量化。"}],"max_tokens":2048,"stream":false}'
 RESP="$(curl -s -m 300 -H 'Content-Type: application/json' -d "$BODY" \
