@@ -512,7 +512,7 @@ bonsai2-ninfer-3060-agent-linux/
 │   ├── BUILD.md                ★ 从零编译引擎的完整配方
 │   ├── EVIDENCE.md             ★ 证据索引：每条结论对应哪个文件
 │   ├── PRIVACY.md              证据里的身份信息怎么脱敏
-│   └── PUBLISH.md              发布门禁：12 条必须全为真才发 Release
+│   ├── PUBLISH.md              发布门禁：12 条必须全为真才发 Release
 │   └── params/                 两份参数实测报告（原始数据与结论）
 │
 ├── evidence/                   ★ 215 个原始日志/JSON —— 病历里每条结论的可点开验证
