@@ -1,0 +1,51 @@
+### argv: lscpu
+### cwd: /home/<user>/文档/deepseek-harness/default-workspace/bonsai2-ninfer-3060-agent-linux
+### start: 2026-10-06T18:47:57+0800
+架构：                                   x86_64
+CPU 运行模式：                           32-bit, 64-bit
+Address sizes:                           43 bits physical, 48 bits virtual
+字节序：                                 Little Endian
+CPU:                                     12
+在线 CPU 列表：                          0-11
+厂商 ID：                                AuthenticAMD
+型号名称：                               AMD Ryzen 5 2600X Six-Core Processor
+CPU 系列：                               23
+型号：                                   8
+每个核的线程数：                         2
+每个座的核数：                           6
+座：                                     1
+步进：                                   2
+Frequency boost:                         启用
+CPU(s) scaling MHz:                      104%
+CPU 最大 MHz：                           3600.0000
+CPU 最小 MHz：                           2200.0000
+BogoMIPS：                               7199.83
+标记：                                   fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ht syscall nx mmxext fxsr_opt pdpe1gb rdtscp lm constant_tsc rep_good nopl nonstop_tsc cpuid extd_apicid aperfmperf rapl pni pclmulqdq monitor ssse3 fma cx16 sse4_1 sse4_2 movbe popcnt aes xsave avx f16c rdrand lahf_lm cmp_legacy svm extapic cr8_legacy abm sse4a misalignsse 3dnowprefetch osvw skinit wdt tce topoext perfctr_core perfctr_nb bpext perfctr_llc mwaitx cpb hw_pstate ssbd ibpb vmmcall fsgsbase bmi1 avx2 smep bmi2 rdseed adx smap clflushopt sha_ni xsaveopt xsavec xgetbv1 clzero xsaveerptr arat npt lbrv svm_lock nrip_save tsc_scale vmcb_clean flushbyasid decodeassists pausefilter pfthreshold avic v_vmsave_vmload vgif overflow_recov succor smca sev sev_es
+虚拟化：                                 AMD-V
+L1d 缓存：                               192 KiB (6 instances)
+L1i 缓存：                               384 KiB (6 instances)
+L2 缓存：                                3 MiB (6 instances)
+L3 缓存：                                16 MiB (2 instances)
+NUMA 节点：                              1
+NUMA 节点0 CPU：                         0-11
+Vulnerability Gather data sampling:      Not affected
+Vulnerability Ghostwrite:                Not affected
+Vulnerability Indirect target selection: Not affected
+Vulnerability Itlb multihit:             Not affected
+Vulnerability L1tf:                      Not affected
+Vulnerability Mds:                       Not affected
+Vulnerability Meltdown:                  Not affected
+Vulnerability Mmio stale data:           Not affected
+Vulnerability Old microcode:             Not affected
+Vulnerability Reg file data sampling:    Not affected
+Vulnerability Retbleed:                  Mitigation; untrained return thunk; SMT vulnerable
+Vulnerability Spec rstack overflow:      Mitigation; Safe RET
+Vulnerability Spec store bypass:         Mitigation; Speculative Store Bypass disabled via prctl
+Vulnerability Spectre v1:                Mitigation; usercopy/swapgs barriers and __user pointer sanitization
+Vulnerability Spectre v2:                Mitigation; Retpolines; IBPB conditional; STIBP disabled; RSB filling; PBRSB-eIBRS Not affected; BHI Not affected
+Vulnerability Srbds:                     Not affected
+Vulnerability Tsa:                       Not affected
+Vulnerability Tsx async abort:           Not affected
+Vulnerability Vmscape:                   Mitigation; IBPB before exit to userspace
+### end: 2026-10-06T18:47:58+0800
+### exit: 0

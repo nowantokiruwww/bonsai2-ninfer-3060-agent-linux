@@ -1,0 +1,10 @@
+### argv: bash -c ls -d $HOME/.cache/ninfer 2>/dev/null && ls -la $HOME/.cache/ninfer || echo '(no ~/.cache/ninfer)'
+### cwd: /home/<user>/文档/deepseek-harness/default-workspace/bonsai2-ninfer-3060-agent-linux
+### start: 2026-10-06T18:47:58+0800
+/home/<user>/.cache/ninfer
+总计 16
+drwxrwxr-x  2 <user> <user> 4096 10月  5 17:03 .
+drwx------ 18 <user> <user> 4096 10月  5 21:17 ..
+-rw-rw-r--  1 <user> <user> 7771 10月  5 17:03 device-profiles.json
+### end: 2026-10-06T18:47:58+0800
+### exit: 0

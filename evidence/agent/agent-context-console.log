@@ -1,0 +1,6 @@
+  ctx~8192: prompt=7730 ttft=8.561s decode=47.7 tok/s
+  ctx~16384: prompt=15442 ttft=17.691s decode=45.3 tok/s
+  ctx~24576: prompt=23154 ttft=27.691s decode=44.1 tok/s
+  ctx~32768: prompt=30866 ttft=38.428s decode=42.1 tok/s
+  ctx~49152: prompt=46290 ttft=62.369s decode=39.0 tok/s
+-> /home/<user>/文档/deepseek-harness/default-workspace/bonsai2-ninfer-3060-agent-linux/results/agent-context-20261006-213902.json

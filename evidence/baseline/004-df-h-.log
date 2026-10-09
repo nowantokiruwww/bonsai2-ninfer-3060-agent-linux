@@ -1,0 +1,14 @@
+### argv: df -h
+### cwd: /home/<user>/文档/deepseek-harness/default-workspace/bonsai2-ninfer-3060-agent-linux
+### start: 2026-10-06T18:47:58+0800
+文件系统        大小  已用  可用 已用% 挂载点
+tmpfs           2.4G  2.4M  2.4G    1% /run
+/dev/sda2       468G   90G  354G   21% /
+tmpfs            12G  624K   12G    1% /dev/shm
+tmpfs           5.0M   12K  5.0M    1% /run/lock
+efivarfs        128K   42K   82K   34% /sys/firmware/efi/efivars
+/dev/sda1       1.1G  6.2M  1.1G    1% /boot/efi
+/dev/sdb2       3.7T  2.7T  1.1T   72% /media/<user>/T9
+tmpfs           2.4G  2.6M  2.4G    1% /run/user/1000
+### end: 2026-10-06T18:47:58+0800
+### exit: 0

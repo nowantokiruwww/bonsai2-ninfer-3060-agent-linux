@@ -1,0 +1,8 @@
+### argv: free -h
+### cwd: /home/<user>/文档/deepseek-harness/default-workspace/bonsai2-ninfer-3060-agent-linux
+### start: 2026-10-06T18:47:58+0800
+               total        used        free      shared  buff/cache   available
+内存：          23Gi        12Gi       402Mi       423Mi        10Gi        10Gi
+交换：         8.0Gi       1.5Gi       6.5Gi
+### end: 2026-10-06T18:47:58+0800
+### exit: 0

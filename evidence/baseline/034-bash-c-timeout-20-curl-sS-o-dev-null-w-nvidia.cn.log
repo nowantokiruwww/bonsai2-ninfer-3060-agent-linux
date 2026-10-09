@@ -1,0 +1,6 @@
+### argv: bash -c timeout 20 curl -sS -o /dev/null -w 'nvidia.cn=%{http_code}\n' 'https://developer.download.nvidia.cn/compute/cuda/12.9.0/local_installers/' || echo '(nvidia mirror unreachable)'
+### cwd: /home/<user>/文档/deepseek-harness/default-workspace/bonsai2-ninfer-3060-agent-linux
+### start: 2026-10-06T18:48:00+0800
+nvidia.cn=404
+### end: 2026-10-06T18:48:02+0800
+### exit: 0

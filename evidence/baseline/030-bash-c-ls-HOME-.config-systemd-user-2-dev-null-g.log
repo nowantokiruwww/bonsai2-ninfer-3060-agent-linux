@@ -1,0 +1,8 @@
+### argv: bash -c ls $HOME/.config/systemd/user/ 2>/dev/null | grep -iE 'ninfer|llama' || echo '(no ninfer/llama user units)'
+### cwd: /home/<user>/文档/deepseek-harness/default-workspace/bonsai2-ninfer-3060-agent-linux
+### start: 2026-10-06T18:47:58+0800
+ninfer-bonsai2-3060.service
+ninfer-bonsai2-3060.service.bak-20261005-194535
+ninfer-bonsai2-3060.service.bak-20261005-203621
+### end: 2026-10-06T18:47:58+0800
+### exit: 0

@@ -1,0 +1,7 @@
+### argv: bash -c gcc --version | head -1; g++ --version | head -1
+### cwd: /home/<user>/文档/deepseek-harness/default-workspace/bonsai2-ninfer-3060-agent-linux
+### start: 2026-10-06T18:47:58+0800
+gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0
+g++ (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0
+### end: 2026-10-06T18:47:58+0800
+### exit: 0

@@ -1,0 +1,11 @@
+### argv: bash -c lsmod | grep -i -E 'nvidia|nouveau' || echo '(no nvidia/nouveau module loaded)'
+### cwd: /home/<user>/文档/deepseek-harness/default-workspace/bonsai2-ninfer-3060-agent-linux
+### start: 2026-10-06T18:47:58+0800
+nvidia_uvm           2080768  4
+nvidia_drm            139264  28
+nvidia_modeset       1687552  33 nvidia_drm
+nvidia              105373696  579 nvidia_uvm,nvidia_drm,nvidia_modeset
+drm_ttm_helper         20480  1 nvidia_drm
+video                  77824  1 nvidia_modeset
+### end: 2026-10-06T18:47:58+0800
+### exit: 0

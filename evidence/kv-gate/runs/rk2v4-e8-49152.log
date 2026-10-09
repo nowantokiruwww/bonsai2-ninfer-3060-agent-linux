@@ -1,0 +1,27 @@
+### cmd: /home/<user>/文档/deepseek-harness/default-workspace/bonsai2-ninfer-3060-agent-linux/.store/build/build-sm86/apps/ninfer-serve /home/<user>/文档/deepseek-harness/default-workspace/bonsai2-ninfer-3060-agent-linux/.store/models/Ternary-Bonsai-2-27B-ninfer-v3.ninfer --host 127.0.0.1 --port 8099 --max-context 49152 --kv-capacity 49152 --kv-dtype rk2v4-e8 --spec dflash2 --draft-tokens 7 --max-concurrency 1 --no-thinking --greedy
+2026-10-06 21:28:18.518  INFO  build 796f985
+2026-10-06 21:28:18.728  INFO  starting engine
+2026-10-06 21:28:18.902  INFO  engine | device profile nvidia-geforce-rtx-3060-sm86: 67 routed keys (ninfer-calibrate on NVIDIA GeForce RTX 3060)
+2026-10-06 21:28:19.736  INFO  loading weights | 7.99 GiB
+2026-10-06 21:28:29.806  INFO    loading weights 53.8% | 4.30 GiB/7.99 GiB | 446.7 MiB/s | ETA 8.5s
+2026-10-06 21:28:38.432  INFO  weights ready | 7.99 GiB | 18.7s | 437.7 MiB/s
+2026-10-06 21:28:38.476  INFO  pinning host state | 1.46 GiB
+2026-10-06 21:28:39.668  INFO  host state pinned | 1.46 GiB | 1.2s
+2026-10-06 21:28:39.668  INFO  pinning host KV | 8.00 GiB
+2026-10-06 21:28:45.842  INFO  host KV pinned | 8.00 GiB | 6.2s
+2026-10-06 21:28:47.284  INFO  CUDA graphs ready | 1.4s
+2026-10-06 21:28:47.286  INFO  engine ready | bonsai2-27b | total 28.6s | weights 7.99 GiB | CUDA sync auto
+2026-10-06 21:28:47.286  INFO  capacity | KV 49,152 tokens, rk2v4-e8, explicit | pages 768/768 | runtime 2.15 GiB | free 1.21 GiB
+2026-10-06 21:28:47.286  INFO  context cache | 1 active + 1 cached device states | host 8 states, 8.00 GiB KV | private 2 | shared 7 | anchors 2
+2026-10-06 21:28:47.744  INFO  warmup complete | 458 ms
+2026-10-06 21:28:47.744  INFO  listening on http://127.0.0.1:8099 | model bonsai2-27b | auth disabled
+2026-10-06 21:28:47.744  INFO  api base http://127.0.0.1:8099/v1
+2026-10-06 21:28:50.316  INFO  req#1 started | openai-chat non-stream | 1 message | max output 256 | thinking off
+2026-10-06 21:28:51.895  INFO  req#1 done | openai-chat | stop token | prompt 35 | output 86 | cache 0 (0.0%) | TTFT 519 ms | total 1.6s | prefill 72.6 tok/s | decode 77.7 tok/s | dflash2 accepted 57/203 (28.1%)
+2026-10-06 21:28:51.917  INFO  req#2 started | openai-chat non-stream | 1 message | max output 256 | thinking off
+2026-10-06 21:28:52.745  INFO  throughput | 5.0s | prefill 8.4 tok/s (42 tok) | decode 26.8 tok/s (134 tok) | running 1 (decode-ready 1) | batch 1.00 | host 7.8% (388 ms)
+2026-10-06 21:28:53.199  INFO  req#2 done | openai-chat | stop token | prompt 35 | output 86 | cache 28 (80.0%, turn closure) | TTFT 82.3 ms | total 1.3s | prefill 116.1 tok/s | decode 77.4 tok/s | dflash2 accepted 57/203 (28.1%)
+2026-10-06 21:28:53.226  INFO  req#3 started | openai-chat non-stream | 1 message | max output 256 | thinking off
+2026-10-06 21:28:54.589  INFO  req#3 done | openai-chat | stop token | prompt 35 | output 86 | cache 35 (100.0%, shared prefix) | TTFT 290 ms | total 1.4s | queue 263 ms | prefill 0.0 tok/s | decode 77.4 tok/s | dflash2 accepted 57/203 (28.1%)
+2026-10-06 21:28:54.590  WARN  Press Ctrl+C again within 5 s to close
+2026-10-06 21:28:57.744  INFO  throughput | 5.0s | decode 24.2 tok/s (121 tok) | running 0 | batch 1.00 | host 0.2% (11.6 ms)

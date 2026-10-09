@@ -1,0 +1,4 @@
+2026-10-07 18:57:46.910  INFO  build 796f985
+2026-10-07 18:57:47.067  INFO  starting engine
+2026-10-07 18:57:47.247  INFO  engine | device profile nvidia-geforce-rtx-3060-sm86: 67 routed keys (ninfer-calibrate on NVIDIA GeForce RTX 3060)
+2026-10-07 18:57:48.165  INFO  loading weights | 7.99 GiB

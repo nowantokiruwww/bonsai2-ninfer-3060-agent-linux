@@ -1,0 +1,7 @@
+### argv: bash -c dpkg -l 'linux-headers-*' 2>/dev/null | awk '/^ii/{print $2}' || echo '(none)'
+### cwd: /home/<user>/文档/deepseek-harness/default-workspace/bonsai2-ninfer-3060-agent-linux
+### start: 2026-10-06T18:47:58+0800
+linux-headers-7.0.0-38-generic
+linux-headers-generic-hwe-24.04
+### end: 2026-10-06T18:47:58+0800
+### exit: 0

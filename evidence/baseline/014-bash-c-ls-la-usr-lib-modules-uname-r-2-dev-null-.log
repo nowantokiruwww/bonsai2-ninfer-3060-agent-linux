@@ -1,0 +1,25 @@
+### argv: bash -c ls -la /usr/lib/modules/$(uname -r)/ 2>/dev/null | head -20 || true
+### cwd: /home/<user>/文档/deepseek-harness/default-workspace/bonsai2-ninfer-3060-agent-linux
+### start: 2026-10-06T18:47:58+0800
+总计 8036
+drwxr-xr-x  7 root root    4096 10月  5 04:40 .
+drwxr-xr-x  3 root root    4096 10月  5 02:41 ..
+lrwxrwxrwx  1 root root      39  9月 10 00:01 build -> /usr/src/linux-headers-7.0.0-38-generic
+drwxr-xr-x  2 root root    4096  9月 10 00:01 initrd
+drwxr-xr-x 16 root root    4096 10月  5 02:41 kernel
+-rw-r--r--  1 root root 1817568 10月  5 04:40 modules.alias
+-rw-r--r--  1 root root 1760629 10月  5 04:40 modules.alias.bin
+-rw-r--r--  1 root root   10431  9月 10 00:01 modules.builtin
+-rw-r--r--  1 root root   73581 10月  5 04:40 modules.builtin.alias.bin
+-rw-r--r--  1 root root   12411 10月  5 04:40 modules.builtin.bin
+-rw-r--r--  1 root root  159067  9月 10 00:01 modules.builtin.modinfo
+-rw-r--r--  1 root root  963539 10月  5 04:40 modules.dep
+-rw-r--r--  1 root root 1263063 10月  5 04:40 modules.dep.bin
+-rw-r--r--  1 root root     353 10月  5 04:40 modules.devname
+-rw-r--r--  1 root root  282013  9月 10 00:01 modules.order
+-rw-r--r--  1 root root    2298 10月  5 04:40 modules.softdep
+-rw-r--r--  1 root root  830201 10月  5 04:40 modules.symbols
+-rw-r--r--  1 root root 1002016 10月  5 04:40 modules.symbols.bin
+drwxr-xr-x  3 root root    4096 10月  5 02:41 ubuntu
+### end: 2026-10-06T18:47:58+0800
+### exit: 0

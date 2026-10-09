@@ -1,0 +1,35 @@
+### argv: nvidia-smi
+### cwd: /home/<user>/文档/deepseek-harness/default-workspace/bonsai2-ninfer-3060-agent-linux
+### start: 2026-10-06T18:47:58+0800
+Tue Oct  6 18:47:58 2026       
++-----------------------------------------------------------------------------------------+
+| NVIDIA-SMI 580.178.04             Driver Version: 580.178.04     CUDA Version: 13.0     |
++-----------------------------------------+------------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
+|                                         |                        |               MIG M. |
+|=========================================+========================+======================|
+|   0  NVIDIA GeForce RTX 3060        Off |   00000000:25:00.0 Off |                  N/A |
+|  0%   59C    P8             17W /  170W |     953MiB /  12288MiB |     48%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+|   1  Tesla V100-SXM2-16GB           Off |   00000000:26:00.0 Off |                    0 |
+| N/A   39C    P0             37W /  300W |   10090MiB /  16384MiB |      0%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+
++-----------------------------------------------------------------------------------------+
+| Processes:                                                                              |
+|  GPU   GI   CI              PID   Type   Process name                        GPU Memory |
+|        ID   ID                                                               Usage      |
+|=========================================================================================|
+|    0   N/A  N/A          686862      G   /usr/lib/xorg/Xorg                      395MiB |
+|    0   N/A  N/A          687142      G   /usr/bin/gnome-shell                     13MiB |
+|    0   N/A  N/A          690241      G   /usr/bin/nautilus                        29MiB |
+|    0   N/A  N/A          963534      G   .../7766/usr/lib/firefox/firefox        232MiB |
+|    0   N/A  N/A         1006098      G   /usr/bin/FlClash                        159MiB |
+|    1   N/A  N/A          686862      G   /usr/lib/xorg/Xorg                        4MiB |
+|    1   N/A  N/A         1003924      C   ...m-sm70/build/bin/llama-server      10082MiB |
++-----------------------------------------------------------------------------------------+
+### end: 2026-10-06T18:47:58+0800
+### exit: 0

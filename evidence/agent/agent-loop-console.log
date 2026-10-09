@@ -1,0 +1,6 @@
+  turn 0: tok=27 prompt=8403 calls=1 wall=9.90s
+  turn 10: tok=27 prompt=8995 calls=1 wall=0.45s
+  turn 20: tok=27 prompt=9545 calls=1 wall=0.46s
+  turn 30: tok=27 prompt=10095 calls=1 wall=0.46s
+  turn 40: tok=27 prompt=10645 calls=1 wall=0.47s
+-> /home/<user>/文档/deepseek-harness/default-workspace/bonsai2-ninfer-3060-agent-linux/results/agent-loop-20261006-213627.json

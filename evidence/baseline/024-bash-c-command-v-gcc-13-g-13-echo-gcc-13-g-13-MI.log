@@ -1,0 +1,7 @@
+### argv: bash -c command -v gcc-13 g++-13 || echo '(gcc-13/g++-13: MISSING)'
+### cwd: /home/<user>/文档/deepseek-harness/default-workspace/bonsai2-ninfer-3060-agent-linux
+### start: 2026-10-06T18:47:58+0800
+/usr/bin/gcc-13
+/usr/bin/g++-13
+### end: 2026-10-06T18:47:58+0800
+### exit: 0

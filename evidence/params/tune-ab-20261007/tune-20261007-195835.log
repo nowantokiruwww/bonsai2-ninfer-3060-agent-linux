@@ -1,0 +1,32 @@
+2026-10-07 19:58:35  命令: /home/<user>/bonsai-ninfer-3060/bin/ninfer-serve /home/<user>/bonsai-ninfer-3060/models/Ternary-Bonsai-2-27B-ninfer-v3.ninfer --host 127.0.0.1 --port 8098 --model-id bonsai2-27b --max-context 49152 --kv-capacity 49152 --kv-dtype rk2v4-e8 --max-concurrency 1 --temperature 1.0 --top-p 0.95 --top-k 20 --no-thinking --request-log-jsonl /home/<user>/bonsai-ninfer-3060/logs/request.jsonl
+2026-10-07 19:58:35.779  INFO  build 796f985
+2026-10-07 19:58:35.936  INFO  starting engine
+2026-10-07 19:58:36.114  INFO  engine | device profile nvidia-geforce-rtx-3060-sm86: 67 routed keys (ninfer-calibrate on NVIDIA GeForce RTX 3060)
+2026-10-07 19:58:36.972  INFO  loading weights | 6.70 GiB
+2026-10-07 19:58:47.101  INFO    loading weights 41.1% | 2.75 GiB/6.70 GiB | 437.2 MiB/s | ETA 9.2s
+2026-10-07 19:58:56.360  INFO  weights ready | 6.70 GiB | 19.4s | 353.6 MiB/s
+2026-10-07 19:58:56.399  INFO  pinning host state | 1.15 GiB
+2026-10-07 19:58:57.300  INFO  host state pinned | 1.15 GiB | 901 ms
+2026-10-07 19:58:57.301  INFO  pinning host KV | 8.00 GiB
+2026-10-07 19:59:03.289  INFO  host KV pinned | 8.00 GiB | 6.0s
+2026-10-07 19:59:03.653  INFO  CUDA graphs ready | 364 ms
+2026-10-07 19:59:03.654  INFO  engine ready | bonsai2-27b | total 27.7s | weights 6.70 GiB | CUDA sync auto
+2026-10-07 19:59:03.654  INFO  capacity | KV 49,152 tokens, rk2v4-e8, explicit | pages 768/768 | runtime 1.07 GiB | free 3.23 GiB
+2026-10-07 19:59:03.654  INFO  context cache | 1 active + 1 cached device states | host 8 states, 8.00 GiB KV | private 2 | shared 7 | anchors 2
+2026-10-07 19:59:04.323  INFO  warmup complete | 668 ms
+2026-10-07 19:59:04.323  INFO  listening on http://127.0.0.1:8098 | model bonsai2-27b | auth disabled
+2026-10-07 19:59:04.323  INFO  api base http://127.0.0.1:8098/v1
+2026-10-07 19:59:05.106  INFO  req#1 started | openai-chat non-stream | 1 message | max output 900 | thinking off
+2026-10-07 19:59:09.324  INFO  throughput | 5.0s | prefill 8.2 tok/s (41 tok) | decode 19.6 tok/s (98 tok) | running 1 (decode-ready 1) | batch 1.00 | host 6.3% (313 ms)
+2026-10-07 19:59:14.324  INFO  throughput | 5.0s | decode 26.4 tok/s (132 tok) | running 1 (decode-ready 1) | batch 1.00 | host 0.2% (9.80 ms)
+2026-10-07 19:59:17.770  INFO  req#1 done | openai-chat | stop token | prompt 41 | output 322 | cache 0 (0.0%) | TTFT 457 ms | total 12.7s | prefill 89.9 tok/s | decode 26.3 tok/s
+2026-10-07 19:59:17.789  INFO  req#2 started | openai-chat non-stream | 1 message | max output 900 | thinking off
+2026-10-07 19:59:19.324  INFO  throughput | 5.0s | prefill 1.4 tok/s (7 tok) | decode 25.2 tok/s (126 tok) | running 1 (decode-ready 1) | batch 1.00 | host 0.3% (15.5 ms)
+2026-10-07 19:59:24.324  INFO  throughput | 5.0s | decode 26.0 tok/s (130 tok) | running 1 (decode-ready 1) | batch 1.00 | host 0.1% (6.46 ms)
+2026-10-07 19:59:29.324  INFO  throughput | 5.0s | decode 26.4 tok/s (132 tok) | running 1 (decode-ready 1) | batch 1.00 | host 0.1% (7.14 ms)
+2026-10-07 19:59:31.130  INFO  req#2 done | openai-chat | stop token | prompt 41 | output 346 | cache 34 (82.9%, turn closure) | TTFT 90.3 ms | total 13.3s | prefill 78.7 tok/s | decode 26.3 tok/s
+2026-10-07 19:59:31.148  INFO  req#3 started | openai-chat non-stream | 1 message | max output 900 | thinking off
+2026-10-07 19:59:34.324  INFO  throughput | 5.0s | decode 24.8 tok/s (124 tok) | running 1 (decode-ready 1) | batch 1.00 | host 0.2% (9.19 ms)
+2026-10-07 19:59:39.324  INFO  throughput | 5.0s | decode 25.6 tok/s (128 tok) | running 1 (decode-ready 1) | batch 1.00 | host 0.2% (8.16 ms)
+2026-10-07 19:59:44.285  INFO  req#3 done | openai-chat | stop token | prompt 41 | output 335 | cache 41 (100.0%, shared prefix) | TTFT 263 ms | total 13.1s | queue 261 ms | prefill 0.0 tok/s | decode 26.0 tok/s
+2026-10-07 19:59:44.324  INFO  throughput | 5.0s | decode 26.0 tok/s (130 tok) | running 0 | batch 1.00 | host 0.2% (8.70 ms)

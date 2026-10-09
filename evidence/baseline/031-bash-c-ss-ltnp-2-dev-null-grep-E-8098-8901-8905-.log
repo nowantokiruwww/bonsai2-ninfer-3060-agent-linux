@@ -1,0 +1,6 @@
+### argv: bash -c ss -ltnp 2>/dev/null | grep -E ':(8098|8901|8905|8906|8907|8908)\b' || echo '(no ninfer-ish ports listening)'
+### cwd: /home/<user>/文档/deepseek-harness/default-workspace/bonsai2-ninfer-3060-agent-linux
+### start: 2026-10-06T18:47:58+0800
+(no ninfer-ish ports listening)
+### end: 2026-10-06T18:47:58+0800
+### exit: 0

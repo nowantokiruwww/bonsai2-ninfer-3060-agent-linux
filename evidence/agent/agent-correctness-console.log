@@ -1,0 +1,7 @@
+  [baseline] P1_repeat: 32.1 tok/s md5=8e311aacb31e
+  [baseline] P2_normal: 33.3 tok/s md5=31357feca813
+  [dflash2_k7] P1_repeat: 103.2 tok/s md5=8e311aacb31e
+  [dflash2_k7] P2_normal: 57.1 tok/s md5=e1f9ea6548fa
+
+=== 投机无损判定: FAIL ===
+-> /home/<user>/文档/deepseek-harness/default-workspace/bonsai2-ninfer-3060-agent-linux/results/agent-correctness-20261006-215313.json

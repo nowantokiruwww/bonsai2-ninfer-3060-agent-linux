@@ -1,0 +1,11 @@
+### argv: bash -c for p in libavcodec libavformat libavutil libswscale libcurl zlib; do printf '%-14s %s\n' "$p" "$(pkg-config --modversion $p 2>/dev/null || echo MISSING)"; done
+### cwd: /home/<user>/文档/deepseek-harness/default-workspace/bonsai2-ninfer-3060-agent-linux
+### start: 2026-10-06T18:47:58+0800
+libavcodec     60.31.102
+libavformat    60.16.100
+libavutil      58.29.100
+libswscale     7.5.100
+libcurl        8.5.0
+zlib           1.3
+### end: 2026-10-06T18:47:58+0800
+### exit: 0

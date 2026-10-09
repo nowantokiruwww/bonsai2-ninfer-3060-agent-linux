@@ -1,0 +1,8 @@
+### argv: bash -c ls -d /usr/local/cuda* 2>/dev/null || echo '(no /usr/local/cuda*)'
+### cwd: /home/<user>/文档/deepseek-harness/default-workspace/bonsai2-ninfer-3060-agent-linux
+### start: 2026-10-06T18:47:58+0800
+/usr/local/cuda
+/usr/local/cuda-13
+/usr/local/cuda-13.1
+### end: 2026-10-06T18:47:58+0800
+### exit: 0

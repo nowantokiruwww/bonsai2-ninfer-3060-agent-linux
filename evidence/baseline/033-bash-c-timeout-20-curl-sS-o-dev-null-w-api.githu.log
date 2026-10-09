@@ -1,0 +1,6 @@
+### argv: bash -c timeout 20 curl -sS -o /dev/null -w 'api.github.com=%{http_code}\n' https://api.github.com || echo '(github api unreachable)'
+### cwd: /home/<user>/文档/deepseek-harness/default-workspace/bonsai2-ninfer-3060-agent-linux
+### start: 2026-10-06T18:47:59+0800
+api.github.com=200
+### end: 2026-10-06T18:48:00+0800
+### exit: 0

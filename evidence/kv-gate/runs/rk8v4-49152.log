@@ -1,0 +1,8 @@
+### cmd: /home/<user>/文档/deepseek-harness/default-workspace/bonsai2-ninfer-3060-agent-linux/.store/build/build-sm86/apps/ninfer-serve /home/<user>/文档/deepseek-harness/default-workspace/bonsai2-ninfer-3060-agent-linux/.store/models/Ternary-Bonsai-2-27B-ninfer-v3.ninfer --host 127.0.0.1 --port 8099 --max-context 49152 --kv-capacity 49152 --kv-dtype rk8v4 --spec dflash2 --draft-tokens 7 --max-concurrency 1 --no-thinking --greedy
+2026-10-06 21:18:26.876  INFO  build 796f985
+2026-10-06 21:18:27.086  INFO  starting engine
+2026-10-06 21:18:27.250  INFO  engine | device profile nvidia-geforce-rtx-3060-sm86: 67 routed keys (ninfer-calibrate on NVIDIA GeForce RTX 3060)
+2026-10-06 21:18:27.981  INFO  loading weights | 7.99 GiB
+2026-10-06 21:18:38.030  INFO    loading weights 53.8% | 4.30 GiB/7.99 GiB | 440.7 MiB/s | ETA 8.6s
+2026-10-06 21:18:46.628  INFO  weights ready | 7.99 GiB | 18.6s | 438.9 MiB/s
+2026-10-06 21:18:46.666  ERROR startup failed | finalizing target | 35.1 ms

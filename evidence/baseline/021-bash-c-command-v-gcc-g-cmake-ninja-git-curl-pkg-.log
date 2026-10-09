@@ -1,0 +1,12 @@
+### argv: bash -c command -v gcc g++ cmake ninja git curl pkg-config || true
+### cwd: /home/<user>/文档/deepseek-harness/default-workspace/bonsai2-ninfer-3060-agent-linux
+### start: 2026-10-06T18:47:58+0800
+/usr/bin/gcc
+/usr/bin/g++
+/usr/bin/cmake
+/usr/bin/ninja
+/usr/bin/git
+/usr/bin/curl
+/usr/bin/pkg-config
+### end: 2026-10-06T18:47:58+0800
+### exit: 0

@@ -1,0 +1,24 @@
+### argv: lsblk -o NAME,SIZE,FSTYPE,MOUNTPOINT
+### cwd: /home/<user>/文档/deepseek-harness/default-workspace/bonsai2-ninfer-3060-agent-linux
+### start: 2026-10-06T18:47:58+0800
+NAME     SIZE FSTYPE   MOUNTPOINT
+loop0      4K squashfs /snap/bare/5
+loop1   66.8M squashfs /snap/core24/2124
+loop2  251.7M squashfs /snap/firefox/7766
+loop3     74M squashfs /snap/core22/2292
+loop4   18.5M squashfs /snap/firmware-updater/210
+loop5  531.4M squashfs /snap/gnome-42-2204/247
+loop6   91.7M squashfs /snap/gtk-common-themes/1535
+loop7   10.8M squashfs /snap/snap-store/1270
+loop8   48.1M squashfs /snap/snapd/25935
+loop9    576K squashfs /snap/snapd-desktop-integration/343
+loop10  44.7M squashfs /snap/snapd/28254
+loop11    74M squashfs /snap/core22/2955
+sda    476.9G          
+├─sda1     1G vfat     /boot/efi
+└─sda2 475.9G ext4     /
+sdb      3.6T          
+├─sdb1    16M          
+└─sdb2   3.6T exfat    /media/<user>/T9
+### end: 2026-10-06T18:47:58+0800
+### exit: 0

@@ -1,0 +1,8 @@
+### argv: bash -c python3 --version; python3 -c 'import ensurepip' 2>&1 | tail -1 || true; command -v pip3 || echo '(pip3: MISSING)'
+### cwd: /home/<user>/文档/deepseek-harness/default-workspace/bonsai2-ninfer-3060-agent-linux
+### start: 2026-10-06T18:47:58+0800
+Python 3.12.3
+ModuleNotFoundError: No module named 'ensurepip'
+(pip3: MISSING)
+### end: 2026-10-06T18:47:58+0800
+### exit: 0
