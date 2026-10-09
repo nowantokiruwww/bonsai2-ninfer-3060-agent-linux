@@ -478,6 +478,7 @@ bonsai2-ninfer-3060-agent-linux/
 │   ├── verify.sh               自检：证明仓库自包含
 │   ├── make-release.sh         打 Release 附件（压缩 + 分卷）
 │   ├── publish-release.sh      把附件传到 GitHub Release（要 GITHUB_TOKEN）
+│   ├── ci/verify.yml           仓库自检的 CI 定义（启用方式见 docs/PUBLISH.md）
 │   └── build/                  ★ 编译期流水线（00-baseline → 99-auto-pipeline）——历史，不是部署路径
 │
 ├── agent/

@@ -49,3 +49,23 @@
 - **驱动**：从宿主机来，容器/载荷都不带。
 - **编译器**：载荷是产物，不是构建环境。要自己编译，见 [`docs/BUILD.md`](BUILD.md)。
 - **任何指向作者本机的绝对路径或身份标识**：见 [`docs/PRIVACY.md`](PRIVACY.md)。
+
+## 关于 CI（为什么没有 badge）
+
+第 12 条门禁本身是可执行的，但目前**没有自动跑**：GitHub 不允许任何 Personal Access Token
+创建或更新 `.github/workflows/*` 文件（需要 `workflow` 权限，而临时 token 只有 `repo` 权限）。
+
+所以 workflow 文件放在 `scripts/ci/verify.yml`，内容就是一行 `bash scripts/verify.sh`。
+想启用 CI，两步：
+
+```bash
+mkdir -p .github/workflows
+cp scripts/ci/verify.yml .github/workflows/verify.yml
+git add .github && git commit -m "enable self-containment CI" && git push
+```
+
+启用后 README 顶部加徽章：
+
+```markdown
+[![仓库自检](https://github.com/<owner>/<repo>/actions/workflows/verify.yml/badge.svg)](https://github.com/<owner>/<repo>/actions/workflows/verify.yml)
+```

@@ -227,7 +227,7 @@ echo
 # 那份报告实际在 docs/params/ —— 读者点开是 404。链接坏掉不会报错，只会静默失效。
 log "[5g/7] 文档里的相对链接全部可达"
 nlink=0; nbad=0
-for src in README.md RELEASE-NOTES.md docs/*.md docs/params/*.md; do
+for src in README.md RELEASE-NOTES.md docs/*.md docs/params/*.md scripts/build/README.md patches/README.md; do
   [ -e "$ROOT/$src" ] || continue
   dir="$(dirname "$src")"
   while IFS= read -r link; do

@@ -1,0 +1,16 @@
+name: 仓库自检
+# 这个文件放在 scripts/ci/，而不是 .github/workflows/，原因见 docs/PUBLISH.md §CI：
+# 当前使用的临时 token 没有 workflow 权限，GitHub 拒绝任何 token 写入 .github/workflows/*。
+# 要启用 CI：把本文件复制到 .github/workflows/verify.yml，然后 push。
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      # 不需要 GPU：verify.sh 证明的是"仓库自包含"，不是"引擎能跑"。
+      - run: bash scripts/verify.sh

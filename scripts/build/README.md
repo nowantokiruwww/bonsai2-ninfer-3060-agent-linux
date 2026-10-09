@@ -20,7 +20,7 @@ RTX 3060 上跑的那条流水线。它存在的意义只有一个：**让 `docs
 | `30-deps.sh` | 系统依赖闭包 | `evidence/toolchain/deps.txt` |
 | `40-fetch-sources.sh` | 拉引擎源码并锁定 commit | `evidence/sources/sources.lock` |
 | `50-build.sh` | sm_86 编译 + 污染门禁 + 产物体检 | `evidence/build/`、`evidence/isolation/` |
-| `55-flag-diff.md` | 静态 flag 面 vs 实际接受 flag | `evidence/serve/flag-diff.md` |
+| `55-flag-diff.sh` | 静态 flag 面 vs 实际接受 flag | `evidence/serve/flag-diff.md` |
 | `60-fetch-model.sh` | 模型工件 + sha256 | `evidence/model/model-identity.txt` |
 | `70-calibrate.sh` | 设备标定（3060 没有内置 profile） | `evidence/calibrate/` |
 | `75-kv-gate.sh` | KV 量化容量门禁 | `evidence/kv-gate/runs/*.log` |
