@@ -58,7 +58,7 @@ done
   echo "expected  = $NINFER_MODEL_SHA256"
   echo "verdict   = PASS"
 } | tee "$EV/model-identity.txt"
-cp "$EV/model-identity.txt" "$PROJ/config/toolchain.lock.d/model.lock" 2>/dev/null || true
+cp "$EV/model-identity.txt" "$PROJ/config/model.lock" 2>/dev/null || true   # 上一代写的是 config/toolchain.lock.d/model.lock
 
 log_finish 0
 echo "[done] model verified -> $NINFER_MODEL_PATH"

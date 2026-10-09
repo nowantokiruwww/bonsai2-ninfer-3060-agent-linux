@@ -34,7 +34,7 @@ UNIT="bonsai2-ninfer-3060.service"
 UNIT_PATH="$HOME/.config/systemd/user/$UNIT"
 EV="$PROJ/evidence/deploy"; mkdir -p "$EV"
 
-[ -x "$SRC_RT/bin/ninfer-serve" ] || { echo "[fail] 找不到发布物 $SRC_RT/bin/ninfer-serve，先跑 bash package/make-package.sh" >&2; exit 1; }
+[ -x "$SRC_RT/bin/ninfer-serve" ] || { echo "[fail] 找不到发布物 $SRC_RT/bin/ninfer-serve，先跑 bash scripts/make-release.sh（上一代叫 package/make-package.sh）" >&2; exit 1; }
 
 echo "=== 0) 若本单元已在跑，先停掉（幂等重部署）==="
 # 不停掉的话，前置检查会看到"8098 被占用 + 显存只剩 1GB"，从而误判失败。

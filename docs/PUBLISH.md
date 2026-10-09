@@ -16,7 +16,7 @@
 | 9 | 正确性控制 | `bash scripts/build/90-agent-accept.sh correctness` | **两臂各自可复现**；两臂是否逐字节相同**如实记录** —— 判据不是 `lossless=true`（见下） |
 | 10 | 复读锁死探针 | `python3 scripts/build/91-repeat-lock-probe.py --ks 4,6,10 --rounds 4 --max-tokens 8192` | 无"连续 ≥3 轮不恢复"的真锁死；**单次 FAIL 不足以否决**（L26/L28） |
 | 11 | 身份清单 | `bash scripts/build/95-manifest.sh` | `evidence/MANIFEST.md` 生成，输入/产物哈希齐全 |
-| 12 | 仓库自包含 | `bash scripts/verify.sh` | 134 项全 PASS：README 里的每条命令存在、每个被引用的路径存在、没有本机绝对路径、没有身份标识 |
+| 12 | 仓库自包含 | `bash scripts/verify.sh` | 136 项全 PASS：README 里的每条命令存在、每个被引用的路径存在、没有本机绝对路径、没有身份标识 |
 
 ## 第 9 条的重要更正
 

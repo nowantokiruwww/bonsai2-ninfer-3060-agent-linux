@@ -321,6 +321,37 @@ else
 fi
 echo
 
+# --- 5l. 病历的完整性：条数与证据行 -----------------------------------------
+# 起因：README 说"31 条移植病历"，而病历的价值在于每条都有可点开验证的证据。
+# 条数漂移（31 变成 30）和"没有证据行的病历"都会让这份文档变成故事集。
+log "[5l/8] 病历条数与声称一致，且每条都有证据行"
+nledger="$(grep -cE '^## L[0-9]+' "$ROOT/docs/PORTING-LEDGER.md")"
+claimledger="$(grep -oE '[0-9]+ 条移植病历' "$ROOT/README.md" | grep -oE '[0-9]+' | head -1)"
+nnoev="$(awk '/^## L[0-9]+/{if(b!="" && b !~ /证据/) n++; b=$0; next} {b=b"\n"$0} END{if(b!="" && b !~ /证据/) n++; print n+0}' "$ROOT/docs/PORTING-LEDGER.md")"
+if [ "$claimledger" = "$nledger" ] && [ "$nnoev" = 0 ]; then
+  ok "病历 $nledger 条，每条都有证据行"
+  npass=$((npass+1))
+else
+  printf '%s[FAIL]%s 病历实际 %s 条，README 声称 %s 条；%s 条没有证据行\n' "$C_R" "$C_0" "$nledger" "${claimledger:-?}" "$nnoev"
+  FAIL=$((FAIL+1))
+fi
+echo
+
+# --- 5m. 证据文件数量与声称一致 ---------------------------------------------
+# 起因：README/EVIDENCE/PRIVACY 三处都写"215 个文件"。evidence/ 少一个文件，
+# 这三句话同时变成假的 —— 而 5e 只检查"被引用的文件存在"，不检查总数。
+log "[5m/8] 证据文件总数与文档声称一致"
+nev="$(cd "$ROOT" && git ls-files evidence | wc -l)"
+claim="$(grep -oE '[0-9]+ 个(原始日志/JSON|文件)' "$ROOT/README.md" "$ROOT/docs/EVIDENCE.md" "$ROOT/docs/PRIVACY.md" 2>/dev/null | grep -oE '[0-9]+' | sort -u)"
+if [ "$(printf '%s\n' $claim | wc -l)" = 1 ] && [ "$claim" = "$nev" ]; then
+  ok "evidence/ 实际 $nev 个文件，与文档声称一致"
+  npass=$((npass+1))
+else
+  printf '%s[FAIL]%s evidence/ 实际 %s 个文件，文档声称 %s\n' "$C_R" "$C_0" "$nev" "$claim"
+  FAIL=$((FAIL+1))
+fi
+echo
+
 # --- 5k. 仓库结构图与真实目录一致 -------------------------------------------
 # 起因：README 的结构图是读者找文件的地图。地图漏一个目录，那个目录就等于不存在
 # （tests/ 曾经不在图上，虽然它里有端到端冒烟测试）。

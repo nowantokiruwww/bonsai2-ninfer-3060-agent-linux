@@ -19,7 +19,7 @@
 
 ## 已扫描的密钥形态
 
-发布前扫描（`scripts/verify.sh` 的 `[5d/7]` 门禁覆盖 README；下面的命令覆盖全仓库）：
+发布前扫描（`scripts/verify.sh` 的 `[5d/8]` 门禁覆盖 README，`[5j/8]` 门禁覆盖全仓库；下面的命令是同一件事的手工版）：
 
 ```bash
 grep -rlE 'gh[pousr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,}|AKIA[0-9A-Z]{16}|hf_[A-Za-z0-9]{20,}|sk-[A-Za-z0-9]{20,}' \

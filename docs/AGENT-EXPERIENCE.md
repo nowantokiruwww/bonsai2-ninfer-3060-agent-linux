@@ -252,7 +252,8 @@ KV 门禁 → 起服务 → agent 验收，全链可复现。唯一必须现场�
 3. **`rk2v4-e8 @ 76768` 起不来了** —— 不是回归，是**显存**：桌面占用变化使可用显存从 11,278 降到
    10,810 MiB。受控二分定位后改用 `49152 @ rk2v4-e8`（在两种桌面状态下都验证通过）。
 4. 二进制 RUNPATH 钉在构建路径、包内无 CUDA 运行库 → 补 `runtime/lib/`（667 MB）+ `LD_LIBRARY_PATH`；
-   现在 `verify.sh` 输出 `PASS: CUDA 运行库解析到包内（包可搬动）`。
+   当时（上一代打包流程的）`verify.sh` 输出 `PASS: CUDA 运行库解析到包内（包可搬动）`；
+   现在的 `scripts/verify.sh` 不再查 `runtime/lib/`，它查的是发布载荷里 `ninfer-serve` 的指纹（见病历 L22）。
 
 详见 `PORTING-LEDGER.md` 的 **L20 / L21 / L22 / L23**。
 

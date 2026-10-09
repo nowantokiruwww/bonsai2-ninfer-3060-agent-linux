@@ -54,7 +54,7 @@
   `sh: 1: <cuda>/bin/../nvvm/bin/cicc: not found`，`--error 0x7f`。
 - **根因**：用 NVIDIA 官方 redist 清单按组件安装时，`cuda_nvcc` 组件**不含** nvcc 的 C 前端；`cicc` 在 **`libnvvm`** 组件里。
 - **解法**：组件清单加入 `libnvvm`（44,796,540 B，v13.1.80）；并在脚本里加前置断言 `[ -x <cuda>/nvvm/bin/cicc ]`，让这个错误以一句清晰的话暴露，而不是让 96 分钟的构建在 1 分钟后死掉。
-- **证据**：`logs/20-cuda/*/003-*.log`、`config/toolchain.lock` 的 `[cuda.components]` 段。
+- **证据**：`config/toolchain.lock` 的 `[cuda.components]` 段（`libnvvm` 的 sha256 与字节数都在里面）；当时的流水线日志 `logs/20-cuda/` 是本机产物，不进版本库。
 - **是否 Linux 特有**：是（这是"免 root 组件化安装"这条 Linux 路线的特有坑；官方 `.run` 或 apt 不会遇到）。
 
 ## L06 组件化 CUDA 安装布局不匹配：库在 `lib/`，nvcc 找 `lib64/`
@@ -62,7 +62,7 @@
 - **现象**：`/usr/bin/ld: 找不到 -lcudadevrt`、`/usr/bin/ld: 找不到 -lcudart_static`，`collect2: error: ld returned 1 exit status`。但这两个文件确实已经装进项目 CUDA 根了。
 - **根因**：CUDA 13 的拆分组件把库放在 `<cuda>/lib/`，而 nvcc/CMake 的库搜索路径是 `<cuda>/lib64`（外加 `<cuda>/lib64/stubs`）。文件在 `lib/libcudadevrt.a` 与 `lib/libcudart_static.a`，链接器去 `lib64` 找，自然找不到。
 - **解法**：合并完成后补 `ln -sfn lib <cuda>/lib64`（幂等），并把这一步写进 `scripts/build/20-cuda-fetch.sh` 的"布局修正"段。
-- **证据**：`logs/20-cuda/*/`、`evidence/toolchain/`。
+- **证据**：`evidence/toolchain/`（流水线日志 `logs/20-cuda/` 是本机产物，不进版本库）。
 - **是否 Linux 特有**：是。
 
 ## L07 GitHub 大 pack 传输被中途掐断
@@ -72,7 +72,7 @@
   `fetch-pack: unexpected disconnect while reading sideband packet`、`fatal: 过早的文件结束符（EOF）`。
 - **根因**：与另一个大下载并发（当时 NVIDIA `.cn` 30MB 用了 8m38s ≈ 58 KB/s），链路被互相挤占；HTTP/2 在长传输上更容易被掐。
 - **解法**：① **重传输必须串行**（单独测时 `.cn` 3.73 MB/s、hf-mirror 3.31 MB/s，说明源站没问题）；② git 强制 `-c http.version=HTTP/1.1 -c http.postBuffer=1073741824 -c core.compression=0`；③ 优先"按 SHA 浅取"——`git init` + `git fetch --depth 1 origin <sha>`，把体量降到最小。改后 33 秒完成。
-- **证据**：`logs/40-sources/20261006-185041/001-*.log`（失败）、`logs/40-sources/20261006-190515/003-*.log`（成功）。
+- **证据**：`evidence/sources/sources.lock`（最终成功的 commit 与 tree 都在里面）；失败与成功的流水线日志 `logs/40-sources/` 是本机产物，不进版本库。
 - **是否 Linux 特有**：否（但"并发挤占"这个教训在本环境特别容易复现）。
 
 ## L08 RTX 3060 在 12G 显存上的 KV 容量强依赖 `--kv-dtype`（禁止把 24576 当常量）
@@ -314,7 +314,7 @@
   ② 含空格的值一律加引号（bash 与 systemd EnvironmentFile 都认）。
 - **为什么值得记**：这两个**只在"用发布物部署"这条最少被走到的路径上暴露**——
   印证了 `PUBLISH-CHECKLIST.md` 里"必须在干净机器上跑一遍安装流程"不是形式主义。
-- **证据**：`logs/97-deploy/`、`evidence/deploy/deploy-report.txt*`（轮转留下的失败现场）。
+- **证据**：`evidence/deploy/deploy-report.txt`（轮转留下的失败现场）；流水线日志 `logs/97-deploy/` 是本机产物，不进版本库。
 - **是否 Linux 特有**：是（systemd EnvironmentFile 与 bash source 的双重语义）。
 
 ## L21 KV 上限**不是这张卡的常数**——随桌面当前占多少显存变化
@@ -337,7 +337,7 @@
   有真实余量；`65536` 只在后一种下验证过）；② 前置检查按**已验证条件**卡门限
   （`VERIFIED_FREE_MIB=10810`，门限 10,600），而不是拿"总占用"当"需要的空闲量"
   （早先误用 11,000，会误拦本来能起的配置）；③ 服务配 `Restart=on-failure`。
-- **证据**：`config/runtime.env（由 ./install.sh 生成，不进版本库）` 里的实测表、`logs/97-deploy/`。
+- **证据**：`config/runtime.env（由 ./install.sh 生成，不进版本库）` 里的实测表；流水线日志 `logs/97-deploy/` 是本机产物，不进版本库。
 - **是否 Linux 特有**：否（但"桌面与推理服务抢显存"在 Linux 桌面上特别常见）。
 
 ## L22 二进制的 RUNPATH 把包钉死在构建机上；解法是随包发 CUDA 运行库
@@ -389,7 +389,7 @@
 - **解法**：`KillSignal=SIGTERM`。实测 **stop 5 秒**、`is-active=inactive`（不再 failed）、
   显存立即释放。已写进 `scripts/build/97-deploy-service.sh` 生成的单元。
 - **对使用者的一致性**：这意味着"手动开关"是可靠的——`stop` 5 秒干净退出，`start` 32–35 秒就绪。
-- **证据**：`logs/97-deploy/*` 里的 `001-systemctl-user-stop-*.log`，以及两次对照实测
+- **证据**：两次对照实测（改 `KillSignal=SIGTERM` 后 stop 从 63 秒降到 5 秒）；流水线日志 `logs/97-deploy/` 是本机产物，不进版本库
   （SIGINT 63 秒 + failed；SIGTERM 5 秒 + inactive）。
 - **是否 Linux 特有**：是（systemd 语义；Windows 上不存在这个问题，这也是"Windows 侧看不出毛病"的一例）。
 
@@ -408,7 +408,7 @@
 - **解法**：注释里的反引号换成直角引号「」。已修，重新生成的 `runtime.env` 两行正文都在。
 - **通用教训**：**在会展开的 heredoc 里写注释也要守纪律**——反引号、`$(`、`${` 一律要转义或换字符。
 - **是否 Linux 特有**：否（bash 语义），但只在 Linux 部署路径上才被触发。
-
+- **证据**：`scripts/build/97-deploy-service.sh:171,199` —— 注释里的报错原文用的是直角引号「」而不是反引号，正是这条坑的修复形态。
 ---
 
 ## L26 生产配置里的 `--no-thinking` 造成**复读锁死**：模型逐字节重复同一次工具调用、永不脱困
@@ -829,7 +829,7 @@ DSH 发 `max_tokens=16384` 所以碰不到，但任何"小 max_tokens + 思考�
 **回滚**：无参数改动，本条只记录测量结论。复跑：`scripts/build/96-tune-serve.sh（`tune.sh` 的源码；载荷包里的 `./tune.sh` 是同一脚本的运行时副本） fast|balanced`，
 产出的 `logs/request.jsonl` 用 `scripts/build/92-thinking-throughput.py` 或
 `python3 /tmp/parse_req.py <jsonl> <offset>` 解析。
-
+- **证据**：`evidence/params/tune-ab-20261007/request.jsonl`（三臂原始数据），`results/kv-feasibility-desktop.json`。
 ---
 
 ## L30 "只读验证"停掉了生产服务 + 参数兜底值漏改：**仓库与运行态的漂移要靠断言看住**（2026-10-08）
@@ -986,7 +986,7 @@ command -v urls_for_bind >/dev/null 2>&1 \
 5. 顺带记下同一族的 L25：那个 heredoc 是**没加引号导致反引号被执行**。
    同一份文件里两个 heredoc，一个"多执行了不该执行的"，一个"少执行了该执行的" ——
    heredoc 的边界与引号是这类脚本里最值得盯的两处。
-
+- **证据**：`docker/entrypoint.sh:96-110` —— 现在用 `: "${KV_DTYPE:=rk2v4-e8}"` 逐行赋值，不再把代码塞进 heredoc；`evidence/deploy/dsh-e2e.txt` 是当时的现场记录。
 ---
 
 ## 工具链与环境事实（供 3080/3090 复用）

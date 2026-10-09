@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
-# scripts/86-verify-live-match.sh — 断言「**本仓库 ≡ 3060 上正在运行的服务**」
+# scripts/build/86-verify-live-match.sh — 断言「**本仓库 ≡ 3060 上正在运行的服务**」
+# 注意：下面 cmp_pair 里的 package/、scripts/NN-*.sh 是**上一代工程的目录布局**（退役仓库），
+# 本仓库对应的是 app/launcher.sh、docker/entrypoint.sh、install.sh。这份脚本是当时那次验证的
+# 可复现记录，不是现在能直接跑的检查 —— 跑它需要当时的部署根。
 #
 # 为什么需要这个脚本：
 #   2026-10-07 这个项目经历了一次大改（L26 复读锁死 → L27 档位 → L28 预算定档 → L29 带宽地板）。
