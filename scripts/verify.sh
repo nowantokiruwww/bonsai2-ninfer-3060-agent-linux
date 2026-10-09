@@ -259,6 +259,68 @@ else
 fi
 echo
 
+# --- 5h. 网页控制台的端点列表与代码一致 -----------------------------------
+# 起因：README 写"六个 API 端点"，实际是 10 GET + 2 POST。文档里的端点列表
+# 只要和代码不一致，读者照着试就会 404 —— 所以把两边对账。
+log "[5h/8] 网页控制台端点：文档与代码一致"
+doc_eps="$(grep -oE '`/api/[a-z/_]+`' "$ROOT/docs/WEBUI.md" 2>/dev/null | tr -d '`' | sort -u)"
+code_eps="$(grep -oE 'path == "/api/[a-z/_]+"|path == \\"/api/[a-z/_]+\\"' "$ROOT/webui/server.py" 2>/dev/null \
+           | grep -oE '/api/[a-z/_]+' | sort -u)"
+mism=0
+while IFS= read -r e; do
+  [ -n "$e" ] || continue
+  if ! grep -q "^${e}$" <<< "$code_eps"; then
+    printf '%s[FAIL]%s docs/WEBUI.md 写了 %s，代码里没有\n' "$C_R" "$C_0" "$e"; mism=$((mism+1))
+  fi
+done <<< "$doc_eps"
+while IFS= read -r e; do
+  [ -n "$e" ] || continue
+  if ! grep -q "^${e}$" <<< "$doc_eps"; then
+    printf '%s[FAIL]%s 代码里有 %s，docs/WEBUI.md 没写\n' "$C_R" "$C_0" "$e"; mism=$((mism+1))
+  fi
+done <<< "$code_eps"
+if [ "$mism" = 0 ]; then
+  ok "docs/WEBUI.md 的端点与 webui/server.py 的 $(printf '%s\n' "$code_eps" | wc -l) 个路由完全对得上"
+  npass=$((npass+1))
+else
+  FAIL=$((FAIL+1))
+fi
+echo
+
+# --- 5i. 每个文档都进了 README 的索引 -------------------------------------
+# 起因：写了 docs/WEBUI.md 却忘了加进索引 —— 文档存在但读者找不到，等于不存在。
+log "[5i/8] 每个 docs/*.md 都在 README 的文档索引里"
+nidx=0; nmiss=0
+while IFS= read -r d; do
+  [ -n "$d" ] || continue
+  nidx=$((nidx+1))
+  rel="docs/$(basename "$d")"
+  if grep -qF "\`$rel\`" "$ROOT/README.md"; then continue; fi
+  printf '%s[FAIL]%s %s 存在，但 README 的文档索引里没有它\n' "$C_R" "$C_0" "$rel"; nmiss=$((nmiss+1))
+done < <(find "$ROOT/docs" -maxdepth 1 -name '*.md' | sort)
+if [ "$nmiss" = 0 ]; then
+  ok "docs/ 里的 $nidx 份文档全部进了 README 索引"
+  npass=$((npass+1))
+else
+  FAIL=$((FAIL+1))
+fi
+echo
+
+# --- 5j. 全仓库密钥扫描 -----------------------------------------------------
+# 起因：PRIVACY.md 声称"扫描结果 0 命中"，但这条断言本身没有门禁 ——
+# 一旦将来某个日志里混进一个真 token，文档里的"0 命中"就变成谎言。
+log "[5j/8] 全仓库没有密钥形态"
+hits="$(cd "$ROOT" && grep -rlE 'gh[pousr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,}|AKIA[0-9A-Z]{16}|hf_[A-Za-z0-9]{20,}|sk-[A-Za-z0-9]{20,}' \
+        . --exclude-dir=.git 2>/dev/null || true)"
+if [ -z "$hits" ]; then
+  ok "密钥形态扫描：0 命中"
+  npass=$((npass+1))
+else
+  printf '%s[FAIL]%s 以下文件里有密钥形态：\n%s' "$C_R" "$C_0" "$hits"
+  FAIL=$((FAIL+1))
+fi
+echo
+
 # --- 6. README 里出现的命令，脚本都存在 --------------------------------
 log "[6/8] README 命令可解析"
 cmds="$(grep -oE '\./[A-Za-z0-9_.-]+(/[A-Za-z0-9_.-]+)?\.sh' "$ROOT/README.md" 2>/dev/null | sort -u || true)"

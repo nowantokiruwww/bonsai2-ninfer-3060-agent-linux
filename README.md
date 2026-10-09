@@ -16,7 +16,7 @@
 > **本仓库已在真机上端到端跑通**（2026-10-08，RTX 3060 12 GB / 驱动 580.x）：
 > `./scripts/fetch-runtime.sh --auto` → `./scripts/fetch-model.sh --from …` → `./install.sh` →
 > `./start.sh`（就绪 32 秒）→ 真实 `/v1/chat/completions` 返回 168 tokens、`finish_reason: stop` →
-> `./webui.sh` 的六个 API 端点与 SSE 日志流全部 200 → `./scripts/verify.sh` **全项通过**。
+> `./webui.sh` 的 10 个 GET / 2 个 POST 端点与 SSE 日志流全部正常（端点列表见 [`docs/WEBUI.md`](docs/WEBUI.md)） → `./scripts/verify.sh` **全项通过**。
 > 上面这段不是"应该能跑"，是跑过了。
 
 ---
@@ -514,6 +514,7 @@ bonsai2-ninfer-3060-agent-linux/
 │   ├── EVIDENCE.md             ★ 证据索引：每条结论对应哪个文件
 │   ├── PRIVACY.md              证据里的身份信息怎么脱敏
 │   ├── PUBLISH.md              发布门禁：12 条必须全为真才发 Release
+│   ├── WEBUI.md                网页控制台的端点列表
 │   └── params/                 两份参数实测报告（原始数据与结论）
 │
 ├── evidence/                   ★ 215 个原始日志/JSON —— 病历里每条结论的可点开验证
@@ -542,7 +543,7 @@ README 里的每个数字都有出处，不是"作者说快"：
   在 Linux 上构建所需的一切，见 `patches/README.md`。
 - **`scripts/build/`** —— 从 `00-baseline` 到 `99-auto-pipeline` 的完整流水线，
   每一步的产出写进 `evidence/`。编译配方见 [`docs/BUILD.md`](docs/BUILD.md)。
-- **`scripts/verify.sh`** —— 把"仓库自包含"当成断言来跑：130 项检查，包括
+- **`scripts/verify.sh`** —— 把"仓库自包含"当成断言来跑：133 项检查，包括
   禁止引用仓库外的绝对路径、禁止泄露身份标识、README 里出现的每个命令必须真实存在。
 
 ---
@@ -617,6 +618,7 @@ README 里的每个数字都有出处，不是"作者说快"：
 | [`docs/EVIDENCE.md`](docs/EVIDENCE.md) | ★ 证据索引：病历里的每一条结论 → 哪个文件可以点开验证（215 个文件） |
 | [`docs/PRIVACY.md`](docs/PRIVACY.md) | 证据文件里哪些信息被脱敏、为什么、以及怎么自己重新脱敏 |
 | [`docs/PUBLISH.md`](docs/PUBLISH.md) | 发布门禁：这个 Release 是怎么被证明可用的（12 条，每条都来自一次真实事故） |
+| [`docs/WEBUI.md`](docs/WEBUI.md) | 网页控制台的接口：10 个 GET / 2 个 POST，逐个列出返回结构 |
 | [`docs/params/REPORT-param-audit-20261007.md`](docs/params/REPORT-param-audit-20261007.md) | 参数审计：六臂矩阵、探针、503 陷阱 |
 | [`docs/params/REPORT-tune-ab-20261007.md`](docs/params/REPORT-tune-ab-20261007.md) | 三臂 A/B：带宽地板的推算过程 |
 
