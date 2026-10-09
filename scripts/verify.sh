@@ -222,6 +222,32 @@ else
 fi
 echo
 
+# --- 5g. 文档内部链接可达 ---------------------------------------------------
+# 起因：AGENT-EXPERIENCE.md 里有一条指向 evidence/params/REPORT-… 的链接，
+# 那份报告实际在 docs/params/ —— 读者点开是 404。链接坏掉不会报错，只会静默失效。
+log "[5g/7] 文档里的相对链接全部可达"
+nlink=0; nbad=0
+for src in README.md RELEASE-NOTES.md docs/*.md docs/params/*.md; do
+  [ -e "$ROOT/$src" ] || continue
+  dir="$(dirname "$src")"
+  while IFS= read -r link; do
+    [ -n "$link" ] || continue
+    case "$link" in http*|/*) continue ;; esac
+    nlink=$((nlink+1))
+    if [ -e "$ROOT/$dir/$link" ] || [ -e "$ROOT/$link" ]; then continue; fi
+    nbad=$((nbad+1))
+    printf '%s[FAIL]%s %s 里的链接 %s 不存在\n' "$C_R" "$C_0" "$src" "$link"
+  done < <(grep -oE '\]\([^) ]+\.(md|sh|py|json|txt|yml|env)\)' "$ROOT/$src" 2>/dev/null \
+           | sed -E 's/^\]\(([^[:space:]]+)\)/\1/')
+done
+if [ "$nbad" = 0 ]; then
+  ok "文档里的 $nlink 条相对链接全部可达"
+  npass=$((npass+1))
+else
+  FAIL=$((FAIL+1))
+fi
+echo
+
 # --- 5d. README 隐私回归门禁 --------------------------------------------
 log "[5d/7] README 隐私标识"
 if grep -qE '(/(home|Users)/[A-Za-z0-9._-]+|GPU-[[:xdigit:]]{6,}-|gh[pousr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,}|AKIA[0-9A-Z]{16}|hf_[A-Za-z0-9]{20,}|[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}|(^|[^0-9.])(10(\.[0-9]{1,3}){3}|192\.168(\.[0-9]{1,3}){2}|172\.(1[6-9]|2[0-9]|3[01])(\.[0-9]{1,3}){2})([^0-9.]|$))' "$ROOT/README.md"; then
