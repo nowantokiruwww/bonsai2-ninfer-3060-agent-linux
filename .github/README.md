@@ -1,1 +1,0 @@
-# Githubic configuration home
