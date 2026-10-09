@@ -496,4 +496,4 @@ V100@8192 = 133/133、3060@16384 = 324/337 —— 模型真的在设计 SVG 坐�
 - 一个测量陷阱（已写进病历）：引擎**在权重加载完成之前就已经在监听端口**，此时 `/v1/models` 回 **503**；
   **就绪判据必须判 HTTP 200，不能只判"curl 有没有回话"**（否则 20 次探针全打在加载窗口里）。
 
-完整报告见 [`evidence/params/REPORT-param-audit-20261007.md`](evidence/params/REPORT-param-audit-20261007.md)，病历见 **L28**。
+完整报告见 [`docs/params/REPORT-param-audit-20261007.md`](docs/params/REPORT-param-audit-20261007.md)，病历见 **L28**。
