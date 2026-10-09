@@ -1,0 +1,53 @@
+[engine-arch-gate]
+8:if(NOT DEFINED CMAKE_CUDA_ARCHITECTURES)
+9:  set(CMAKE_CUDA_ARCHITECTURES 86 CACHE STRING "CUDA architectures to build")
+14:if(NOT CMAKE_CUDA_ARCHITECTURES MATCHES "^(80|86|89|120a)$")
+15:  message(FATAL_ERROR
+16:    "NInfer supports CMAKE_CUDA_ARCHITECTURES=80, 86, 89 or 120a; got "
+17:    "'${CMAKE_CUDA_ARCHITECTURES}'")
+22:# CUDA 12.8 and 12.9 miscompile sm_120a code. 12.8's ptxas reads a register under one predicate
+28:if(CMAKE_CUDA_ARCHITECTURES STREQUAL "120a" AND CMAKE_CUDA_COMPILER_VERSION VERSION_LESS 13.1)
+29:  message(FATAL_ERROR
+45:if(CMAKE_CUDA_ARCHITECTURES MATCHES "^(80|86|89)$" OR NOT NINFER_SM120_NATIVE)
+65:  if(NOT CMAKE_CUDA_ARCHITECTURES STREQUAL "120a")
+66:    message(FATAL_ERROR "NINFER_PDL requires CMAKE_CUDA_ARCHITECTURES=120a")
+74:if(CMAKE_CUDA_ARCHITECTURES STREQUAL "120a")
+214:  message(FATAL_ERROR
+215:    "NInfer requires CUDA 12.8 or newer; found CUDA compiler "
+
+[engine-cuda-floor]
+  # nvcc's own frontend and has no documented remapping flag, so it is not covered here.
+  add_compile_options(
+    $<$<COMPILE_LANGUAGE:C,CXX>:-ffile-prefix-map=${PROJECT_SOURCE_DIR}=.>
+    $<$<COMPILE_LANGUAGE:CUDA>:-Xcompiler=-ffile-prefix-map=${PROJECT_SOURCE_DIR}=.>)
+endif()
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE Release)
+endif()
+
+[engine-artifact-v3]
+31:                    ": NInfer v2 artifact is not supported. Upgrade to v3 with: "
+34:            throw ArtifactError(entry.string() + ": expected NInfer v3 entry magic");
+
+[engine-sm86-fp8-stub]
+-rw-rw-r-- 1 <user> <user> 3919 10月  6 19:05 /home/<user>/文档/deepseek-harness/default-workspace/bonsai2-ninfer-3060-agent-linux/.store/src/ninfer-all/src/ops/fp8_sm86_stubs.cpp
+
+[engine-t2_g128_fp16]
+files_hit = 3
+  /home/<user>/文档/deepseek-harness/default-workspace/bonsai2-ninfer-3060-agent-linux/.store/src/ninfer-all/src/artifact/formats.cpp
+  /home/<user>/文档/deepseek-harness/default-workspace/bonsai2-ninfer-3060-agent-linux/.store/src/ninfer-all/src/ops/wrapper/hadamard_transform.cpp
+  /home/<user>/文档/deepseek-harness/default-workspace/bonsai2-ninfer-3060-agent-linux/.store/src/ninfer-all/include/ninfer/ops/hadamard_transform.h
+
+[engine-hadamard_signs]
+files_hit = 17
+
+[engine-device-profile-resolution-order]
+## Where profiles come from
+
+Up to three layers answer, per route key:
+
+1. **Your profile file.** `$NINFER_DEVICE_PROFILES`, else `$XDG_CACHE_HOME/ninfer/device-profiles.json`,
+   else `~/.cache/ninfer/device-profiles.json` (`%LOCALAPPDATA%\ninfer\device-profiles.json` on
+   Windows). `--device-profile-path` names another file.
+2. **The built-in table.** Profiles measured on the RTX 3090, RTX 4090, RTX 5090 and the RTX PRO 6000
+   Blackwell ship inside the binary (`src/runtime/engine/device_profiles.json`). The PRO 6000's

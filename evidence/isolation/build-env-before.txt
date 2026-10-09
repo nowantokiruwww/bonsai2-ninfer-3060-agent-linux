@@ -1,0 +1,11 @@
+# 构建期污染门禁
+checked_at=2026-10-06T21:56:35+0800
+CUDA_HOME          = <unset>
+CUDA_PATH          = <unset>
+CUDA_ROOT          = <unset>
+CUDACXX            = <unset>
+CUDAToolkit_ROOT   = <unset>
+CMAKE_PREFIX_PATH  = <unset>
+PKG_CONFIG_PATH    = <unset>
+PATH             = /home/<user>/.nvm/versions/node/v22.23.3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/snap/bin
+LD_LIBRARY_PATH  = <unset>

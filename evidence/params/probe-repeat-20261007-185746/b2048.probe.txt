@@ -1,0 +1,15 @@
+[fail] 连不上 http://127.0.0.1:8098: HTTP Error 503: Service Unavailable
+# 复读锁死探针 base=http://127.0.0.1:8098 model=bonsai2-27b rounds=4 err=notfound
+  K  prompt   out    sec  rounds
+[fail] 连不上 http://127.0.0.1:8098: HTTP Error 503: Service Unavailable
+# 复读锁死探针 base=http://127.0.0.1:8098 model=bonsai2-27b rounds=4 err=notfound
+  K  prompt   out    sec  rounds
+[fail] 连不上 http://127.0.0.1:8098: HTTP Error 503: Service Unavailable
+# 复读锁死探针 base=http://127.0.0.1:8098 model=bonsai2-27b rounds=4 err=notfound
+  K  prompt   out    sec  rounds
+[fail] 连不上 http://127.0.0.1:8098: HTTP Error 503: Service Unavailable
+# 复读锁死探针 base=http://127.0.0.1:8098 model=bonsai2-27b rounds=4 err=notfound
+  K  prompt   out    sec  rounds
+[fail] 连不上 http://127.0.0.1:8098: HTTP Error 503: Service Unavailable
+# 复读锁死探针 base=http://127.0.0.1:8098 model=bonsai2-27b rounds=4 err=notfound
+  K  prompt   out    sec  rounds

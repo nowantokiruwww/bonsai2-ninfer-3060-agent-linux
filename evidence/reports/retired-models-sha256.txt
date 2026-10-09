@@ -1,0 +1,5 @@
+# 删除前存档  2026-10-08T19:36:29+08:00
+# 主机: <user>-MS-7B89  说明: 下列文件已从本机删除；此表用于将来核对同名文件
+# 格式: <sha256>  <字节数>  <原路径>
+58fd826723939933dc86f45b7fe04545cbc2de1c70f6fe2cdd3858c87a98c12f  12120016960  /home/<user>/llm/models/Qwen3.8-27B-GSQ-RCO-IQ3_S-mtp.gguf
+1e33c571a5ce7a9a3e42474d66192923d5a6d77da7fb3a22986dc809522b5685  6297658848  /home/<user>/llm/models/Ternary-Bonsai-2-27B-PTQ1_0-mtp-lean.gguf

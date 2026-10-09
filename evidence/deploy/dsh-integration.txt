@@ -1,0 +1,26 @@
+### DSH 接入（bonsai2-3060）
+baseURL = http://127.0.0.1:8098/v1
+contextWindow = 49152   (KV rk2v4-e8)
+apiKeyEnv = BONSAI2_3060_API_KEY
+changed_fields = see log
+
+### bonsai2-3060 块（改后）
+      bonsai2-3060:
+        displayName: 3060 Bonsai 2 27B (dflash2-5)
+        baseURL: http://127.0.0.1:8098/v1
+        api: openai-completions
+        models:
+          - id: bonsai2-27b
+            name: Bonsai 2 27B 三值 (3060)
+            contextWindow: 49152
+            maxTokens: 8192
+            input:
+              - text
+            reasoningEfforts: false
+        defaultInput:
+          - text
+        defaultContextWindow: 49152
+        defaultMaxTokens: 8192
+        timeoutMs: 300000
+        streamIdleTimeoutMs: 300000
+        apiKeyEnv: BONSAI2_3060_API_KEY

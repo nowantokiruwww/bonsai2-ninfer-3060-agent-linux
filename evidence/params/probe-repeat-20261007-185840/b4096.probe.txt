@@ -1,0 +1,35 @@
+# 复读锁死探针 base=http://127.0.0.1:8098 model=bonsai2-27b rounds=4 err=notfound
+  K  prompt   out    sec  rounds
+  4    1215    84    1.8  ['OK(read)', 'OK(read)', 'OK(bash)', 'OK(bash)']
+  6    1485    85    1.6  ['EDIT-OTHER', 'OK(read)', 'OK(read)', 'OK(bash)']
+ 10    1995   211    4.2  ['OK(bash)', 'OK(bash)', 'OK(bash)', 'OK(bash)']
+
+[PASS] 所有 K 均未锁死，模型会改换策略。
+# 复读锁死探针 base=http://127.0.0.1:8098 model=bonsai2-27b rounds=4 err=notfound
+  K  prompt   out    sec  rounds
+  4    1200   103    2.0  ['OK(read)', 'OK(bash)', 'OK(bash)', 'OK(bash)']
+  6    1485    61    1.2  ['OK(read)', 'EDIT-OTHER', 'OK(read)', 'OK(bash)']
+ 10    1994    84    1.7  ['OK(bash)', 'OK(bash)', 'OK(bash)', 'OK(bash)']
+
+[PASS] 所有 K 均未锁死，模型会改换策略。
+# 复读锁死探针 base=http://127.0.0.1:8098 model=bonsai2-27b rounds=4 err=notfound
+  K  prompt   out    sec  rounds
+  4    1203    80    1.8  ['OK(read)', 'OK(bash)', 'OK(bash)', 'OK(bash)']
+  6    1461   118    2.5  ['OK(bash)', 'OK(read)', 'OK(read)', 'OK(bash)']
+ 10    2020    55    1.4  ['EDIT-OTHER', 'OK(bash)', 'OK(bash)', 'OK(bash)']
+
+[PASS] 所有 K 均未锁死，模型会改换策略。
+# 复读锁死探针 base=http://127.0.0.1:8098 model=bonsai2-27b rounds=4 err=notfound
+  K  prompt   out    sec  rounds
+  4    1229    72    1.6  ['OK(read)', 'OK(bash)', 'OK(bash)', 'OK(bash)']
+  6    1479    64    1.7  ['OK(bash)', 'OK(read)', 'OK(bash)', 'OK(bash)']
+ 10    1997   135    2.8  ['OK(read)', 'OK(bash)', 'OK(read)', 'OK(bash)']
+
+[PASS] 所有 K 均未锁死，模型会改换策略。
+# 复读锁死探针 base=http://127.0.0.1:8098 model=bonsai2-27b rounds=4 err=notfound
+  K  prompt   out    sec  rounds
+  4    1253   153    2.8  ['OK(read)', 'OK(bash)', 'OK(read)', 'OK(bash)']
+  6    1462    65    1.5  ['OK(read)', 'OK(bash)', 'OK(bash)', 'OK(bash)']
+ 10    2055    94    1.8  ['OK(read)', 'LOCKED(byte-identical repeat)', 'OK(bash)', 'OK(bash)']  <== LOCKED
+
+[FAIL] K=[10] 进入复读锁死吸引子。检查服务配置：--greedy 必须不在，采样（--temperature/--top-p/--top-k）应生效；`--default-thinking-budget` 是收口机制而非质量帽，必须与 max_tokens 配对（预算 + 工具调用载荷 ≤ max_tokens，见 L27）。

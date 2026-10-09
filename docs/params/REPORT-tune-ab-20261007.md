@@ -5,7 +5,7 @@
 中文散文上 dflash2 的接受率只有 **6%**，所以它回到地板值 —— 与思考开关、思考预算、投机开关**都无关**。
 
 原始数据：`evidence/params/tune-ab-20261007/request.jsonl`（三臂，同机同卡同权重）。
-命令行的三个臂由 `~/bonsai-ninfer-3060/tune.sh` 拉起（它把日志直接打在终端）。
+命令行的三个臂由 `scripts/build/96-tune-serve.sh（`tune.sh` 的源码；载荷包里的 `./tune.sh` 是同一脚本的运行时副本）` 拉起（它把日志直接打在终端）。
 
 ## 1. 三臂矩阵
 
@@ -61,7 +61,7 @@ DSH 发 `max_tokens=16384` 所以碰不到；任何"小 `max_tokens` + 思考开
 
 ## 4. 调参器自己的坑（已修）
 
-`scripts/96-tune-serve.sh` 第一版只 `source` 了 `config/runtime.env` 而没有 `export`，
+`scripts/build/96-tune-serve.sh` 第一版只 `source` 了 `config/runtime.env` 而没有 `export`，
 于是子进程环境里**没有** `CUDA_VISIBLE_DEVICES`，引擎按 CUDA 自己的设备序**挑中了 V100**：
 
 ```
@@ -79,14 +79,14 @@ CUDA_CHECK(cudaGetLastError()) failed: cudaErrorNoKernelImageForDevice
 ## 5. 复跑方法
 
 ```bash
-~/bonsai-ninfer-3060/tune.sh                 # 预设表 + 当前生产档
-~/bonsai-ninfer-3060/tune.sh fast            # 不思考（日志打在终端；Ctrl-C 一次干净退出）
-~/bonsai-ninfer-3060/tune.sh balanced        # 思考 1024
-~/bonsai-ninfer-3060/tune.sh --spec none --thinking off   # 关投机对照
+scripts/build/96-tune-serve.sh（`tune.sh` 的源码；载荷包里的 `./tune.sh` 是同一脚本的运行时副本）                 # 预设表 + 当前生产档
+scripts/build/96-tune-serve.sh（`tune.sh` 的源码；载荷包里的 `./tune.sh` 是同一脚本的运行时副本） fast            # 不思考（日志打在终端；Ctrl-C 一次干净退出）
+scripts/build/96-tune-serve.sh（`tune.sh` 的源码；载荷包里的 `./tune.sh` 是同一脚本的运行时副本） balanced        # 思考 1024
+scripts/build/96-tune-serve.sh（`tune.sh` 的源码；载荷包里的 `./tune.sh` 是同一脚本的运行时副本） --spec none --thinking off   # 关投机对照
 ```
 
 解析新产生的日志（`offset` 用 `stat -c%s` 在启动前取）：
 
 ```bash
-python3 scripts/92-thinking-throughput.py --jsonl ~/bonsai-ninfer-3060/logs/request.jsonl
+python3 scripts/build/92-thinking-throughput.py --jsonl evidence/params/tune-ab-20261007/request.jsonl
 ```

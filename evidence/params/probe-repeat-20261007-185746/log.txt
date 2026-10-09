@@ -1,0 +1,41 @@
+=== 复读锁死探针重复测量 2026年 10月 07日 星期三 18:57:46 CST ===
+预算: 512,1024,2048,4096   每档重复: 5   探针 K=7   max_tokens=16384
+输出目录: /home/<user>/文档/deepseek-harness/default-workspace/bonsai2-ninfer-3060-agent-linux/evidence/params/probe-repeat-20261007-185746
+
+── 预算 512 ─────────────────────────
+  就绪
+  rep1 rc=2
+  rep2 rc=2
+  rep3 rc=2
+  rep4 rc=2
+  rep5 rc=2
+
+── 预算 1024 ─────────────────────────
+  就绪
+  rep1 rc=2
+  rep2 rc=2
+  rep3 rc=2
+  rep4 rc=2
+  rep5 rc=2
+
+── 预算 2048 ─────────────────────────
+  就绪
+  rep1 rc=2
+  rep2 rc=2
+  rep3 rc=2
+  rep4 rc=2
+  rep5 rc=2
+
+── 预算 4096 ─────────────────────────
+  就绪
+  rep1 rc=2
+  rep2 rc=2
+  rep3 rc=2
+  rep4 rc=2
+  rep5 rc=2
+
+=== 统计 ===
+b1024    判据    0 | LOCKED   0 (  0.0%) | 探针 PASS  0 / FAIL  0 | 真锁死(>=3轮连续) 0
+b2048    判据    0 | LOCKED   0 (  0.0%) | 探针 PASS  0 / FAIL  0 | 真锁死(>=3轮连续) 0
+b4096    判据    0 | LOCKED   0 (  0.0%) | 探针 PASS  0 / FAIL  0 | 真锁死(>=3轮连续) 0
+b512     判据    0 | LOCKED   0 (  0.0%) | 探针 PASS  0 / FAIL  0 | 真锁死(>=3轮连续) 0

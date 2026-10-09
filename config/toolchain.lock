@@ -1,0 +1,33 @@
+# toolchain.lock — 由 scripts/20-cuda-fetch.sh 与 scripts/30-deps.sh 生成
+# generated_at: 2026-10-06T19:07:22+0800
+
+[cuda]
+requested_version = 13.1
+redist_manifest   = redistrib_13.1.0.json
+redist_sha256     = 55304d9d831bb095d9594aab276f96d2f0e30919f4cc1b3f6ca78cdb5f643e11
+floor             = 12.8   # CMakeLists.txt:201-204 强制
+install_dir       = /home/<user>/文档/deepseek-harness/default-workspace/bonsai2-ninfer-3060-agent-linux/.store/toolchain/cuda-13.1
+
+[cuda.components]
+cuda_nvcc          v13.1.80        30014972 B  sha256=5ed3b7cfe7f12557199773e7769445357ee048958ff51e623e15f36d3393ca8b
+cuda_crt           v13.1.80           79624 B  sha256=0e7c365d3301a1b486dbee600b833f6bc771b1a7cc660abca0923269023355ed
+cuda_cudart        v13.1.80         1549648 B  sha256=b626f4790f46bc9324a1047f2fbcc9a42bc4a722b053056e61cc00da54ad6f32
+cuda_cccl          v13.1.78         1096784 B  sha256=e23c8847aa429431d7eb4ccb87ded5eecaa6ba92f7b4bbab90c75c6141e635a2
+cuda_culibos       v13.1.68           21384 B  sha256=0ed07a173e8cf54d26aadd70e851ca03e8aa529d6a09170b54bd2ba98b77c5ec
+cuda_cuobjdump     v13.1.80          263548 B  sha256=3de0169fd8d00e8bdd5ec91a6eb89a78229d82e478cb85554f89748107ba928c
+cuda_nvprune       v13.1.80           61600 B  sha256=b459d0342098bc362636ded5a39c5ed5a05b429cb50c5b354e3820e6ea763275
+libcublas          v13.2.0.9      836864428 B  sha256=e23c85f0d80b0c8af5e76a87dc400a123f455e4a603524ed6219616c33283cda
+libnvjitlink       v13.1.80        55647596 B  sha256=850cba213192691046441b5334588daa796c3dbce71253131fbf3c77e29ca18d
+libnvfatbin        v13.1.80          944976 B  sha256=b132f7a171dd1a44d88c00416bfa8beacb0182759fdfce8bb96ae1f369085698
+libnvvm            v13.1.80        44796540 B  sha256=1a102f6658b6ecaa7a3aae1aa85a61a9aa6ba197be9f6b185d906deb2a6c5afd
+cuda_nvtx          v13.1.68           97072 B  sha256=632a0d3533f96f81440cda92c33189850694e82833c9aeba9706339476d36642
+cuda_profiler_api  v13.1.80           17052 B  sha256=c59fe08ba129401df21ccee8ad3ad9037fda045963f62a9bc4f5f74d8d69bbf3
+cuda_nvml_dev      v13.1.68          144408 B  sha256=f6c9f839db48bc1dcb9624a6654afb5de3056334eff80be6df51a3ca8eb9266f
+cuda_nvdisasm      v13.1.80         4153976 B  sha256=b169c329bda674e6f9ae5db9845ea09d40f593c96faf11b7f8d4c0a8a2576f17
+cuda_cuxxfilt      v13.1.80           56252 B  sha256=949422d0d1c426f50105c08b3f0cc595b0be262f067a07cc34af6020e27c1ddc
+cuda_opencl        v13.1.80           95144 B  sha256=915b823a26b4da7aaddbf310973ee967fc01dd42380199092e177076de0a86da
+cuda_sandbox_dev   v13.1.68           30204 B  sha256=98a9f54cc7e9d1ced9cc6a8d2e43be7822fbb98581f9480fa9c993ede7003366
+
+[cuda.resolved]
+nvcc_release = 13.1
+gpu_archs = compute_75 compute_80 compute_86 compute_87 compute_88 compute_89 compute_90 compute_100 compute_110 compute_103 compute_120 compute_121 

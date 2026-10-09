@@ -213,17 +213,17 @@ KV 门禁 → 起服务 → agent 验收，全链可复现。唯一必须现场�
 
 | 项 | 值 |
 |---|---|
-| 部署根 | `~/bonsai-ninfer-3060/`（纯 ASCII；发布物整目录拷过去，不在工程目录里跑） |
+| 部署根 | `仓库根（本仓库）`（纯 ASCII；发布物整目录拷过去，不在工程目录里跑） |
 | 服务 | user systemd `bonsai2-ninfer-3060.service`：`Type=simple`、`Restart=on-failure`、`KillSignal=SIGINT` |
-| 启动命令 | `~/bonsai-ninfer-3060/runtime-tools.sh serve --foreground`（前台；日志由 systemd 追加到 `logs/service.log`） |
+| 启动命令 | `scripts/build/96-tune-serve.sh / 载荷包内 runtime-tools.sh serve --foreground`（前台；日志由 systemd 追加到 `logs/service.log`） |
 | 端点 | `http://127.0.0.1:8098/v1`；`/v1/models` → `id=bonsai2-27b`、`context_length=49152` |
 | 就绪耗时 | **31–33 秒**（权重 7.99 GiB，约 440 MiB/s） |
 | 显存 | 服务起来后 3060 总占用 10,750 / 12,288 MiB（余量约 1.1 GiB） |
-| 调参入口 | **唯一一个文件**：`~/bonsai-ninfer-3060/config/runtime.env` |
+| 调参入口 | **唯一一个文件**：`config/runtime.env（由 ./install.sh 生成，不进版本库）` |
 
 ### 11.2 端到端验证（真的 DSH agent，不是只 ping 端口）
 
-`scripts/99-verify-dsh.sh` 用 `dsh --profile headless --patch <临时 overlay>` 跑一次真实任务
+`scripts/build/99-verify-dsh.sh` 用 `dsh --profile headless --patch <临时 overlay>` 跑一次真实任务
 （要求模型调用 shell 工具执行 `echo bonsai-ninfer-ok`），并与服务端日志**双向对账**：
 
 | 检查 | 结果 |
@@ -265,7 +265,7 @@ KV 门禁 → 起服务 → agent 验收，全链可复现。唯一必须现场�
 
 **这是一条此前验收没覆盖的失败模式**：A1（回路能跑通）、A2（长上下文无断崖）、
 A3（长时间无漂移）、A5（冷启动）都过了，但它们都**没有构造"同一条失败调用被反复堆进上下文"**。
-于是补了 A7 门禁：`scripts/91-repeat-lock-probe.py`。
+于是补了 A7 门禁：`scripts/build/91-repeat-lock-probe.py`。
 
 ### 12.1 结论先行
 
@@ -353,7 +353,7 @@ EXTRA_FLAGS="--max-concurrency 1 --temperature 1.0 --top-p 0.95 --top-k 20 \
 > 说的是"某档位测得多少"，不是"现在跑的是哪档"。
 
 若你也用 DSH 接这个服务，需要把这个模型的 `maxTokens` / `defaultMaxTokens`
-提到 `16384`（作者本机是 `~/.dsh/profiles/web/cordis.patch.yml:92,99`，
+提到 `16384`（作者本机是 `本机 harness 配置文件（未发布；摘录见下文）第 92、99 行`，
 路径只是举例，按你自己的 profile 改）。**需 DSH 重启 / 新会话才生效。**
 
 ### 13.3 V100 ↔ 3060 参数映射
@@ -407,7 +407,7 @@ V100@8192 = 133/133、3060@16384 = 324/337 —— 模型真的在设计 SVG 坐�
 ### 13.7 回归（全部实测）
 
 - **端到端**：预算 4096 @ 16384 → `finish_reason=tool_calls`，思考 4,121 字符，写出完整 HTML。
-- **A7 门禁**：`python3 scripts/91-repeat-lock-probe.py --ks 4,6,10 --rounds 4 --max-tokens 8192`
+- **A7 门禁**：`python3 scripts/build/91-repeat-lock-probe.py --ks 4,6,10 --rounds 4 --max-tokens 8192`
   三次独立运行、36 轮**全部 PASS**。
   ⚠ **必须显式放大 `--max-tokens`**：预算 4096 时脚本默认的 900 会被思考吃光。
 - **门禁判据的已知偏严**：另一次 `--rounds 2` 运行在 K=4 首轮判 `LOCKED`、**第 2 轮即恢复**。
@@ -443,9 +443,9 @@ V100@8192 = 133/133、3060@16384 = 324/337 —— 模型真的在设计 SVG 坐�
 | 改后 | 32768 | **stop** | 26392 | **24017** | 416 s |
 | 改后 | 8192 | **length** | 8192 | **0** | 116 s |
 
-两条新教训（细节见 `~/llm/报告/bonsai-3060-vs-v100-params.md` §9 与 PORTING-LEDGER §27.9）：
+两条新教训（细节见 `evidence/reports/bonsai-3060-vs-v100-params.md` §9 与 PORTING-LEDGER §27.9）：
 1. **只提高 `maxTokens` 不能解决"思考不收口"**——给多少它烧多少，还更慢。预算才是收口机制。
-2. **同族两个模型可能用两个不同的二进制**：`v100-qwen38` 用的 `~/llm/v100-sm70/llama-server`
+2. **同族两个模型可能用两个不同的二进制**：`v100-qwen38` 用的 `本机 V100 对照二进制（未发布）`
    支持 `--reasoning-budget` 但**不支持 `--reasoning-effort`**。跨引擎照抄参数前，先对**那个
    构建自己的** `--help` 求证。
 
@@ -489,9 +489,9 @@ V100@8192 = 133/133、3060@16384 = 324/337 —— 模型真的在设计 SVG 坐�
 
 **方法论产出**：
 
-- `scripts/92-thinking-throughput.py` —— 从 `request.jsonl` 分桶出 decode / 接受率 / 思考量 / TTFT。
-- `scripts/93-param-frontier.sh` —— 矩阵实测台（**刻意不走 systemd**，每臂独立请求日志，逐臂对账）。
-- `scripts/94-lock-probe-repeat.sh` —— **单次探针不能当门禁**：四档都出现过 FAIL，
+- `scripts/build/92-thinking-throughput.py` —— 从 `request.jsonl` 分桶出 decode / 接受率 / 思考量 / TTFT。
+- `scripts/build/93-param-frontier.sh` —— 矩阵实测台（**刻意不走 systemd**，每臂独立请求日志，逐臂对账）。
+- `scripts/build/94-lock-probe-repeat.sh` —— **单次探针不能当门禁**：四档都出现过 FAIL，
   但**真锁死（≥3 轮连续不恢复）在四档里都是 0** → 降预算是安全的。
 - 一个测量陷阱（已写进病历）：引擎**在权重加载完成之前就已经在监听端口**，此时 `/v1/models` 回 **503**；
   **就绪判据必须判 HTTP 200，不能只判"curl 有没有回话"**（否则 20 次探针全打在加载窗口里）。

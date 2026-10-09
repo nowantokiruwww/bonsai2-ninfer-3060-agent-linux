@@ -1,0 +1,7 @@
+# 入口文件
+/home/<user>/文档/deepseek-harness/default-workspace/bonsai2-ninfer-3060-agent-linux/.store/build/build-sm86/apps/ninfer-serve: ELF 64-bit LSB pie executable, x86-64, version 1 (GNU/Linux), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, BuildID[sha1]=1dcd3f56c3946659a078d62dad9ef5824a1397f8, for GNU/Linux 3.2.0, not stripped
+# sha256
+73123b32b5f91cc110e4ae787ed8b70c4a06fcbf93cafa9d09ce976ae6f47a29  /home/<user>/文档/deepseek-harness/default-workspace/bonsai2-ninfer-3060-agent-linux/.store/build/build-sm86/apps/ninfer
+e2ff5e50699652d212615ff104871081449fe1d4b785483eadbdeb401a200e3c  /home/<user>/文档/deepseek-harness/default-workspace/bonsai2-ninfer-3060-agent-linux/.store/build/build-sm86/apps/ninfer-calibrate
+b15e5a15762605a5f3d80de4d89c771c5ada1d6c9b876ec6a44629e73ac01ff7  /home/<user>/文档/deepseek-harness/default-workspace/bonsai2-ninfer-3060-agent-linux/.store/build/build-sm86/apps/ninfer-perplexity
+7ebf2ebf6c086f0f135f97090825c0a8a0a05fd02ffc9199c5faf9dc6cc6d574  /home/<user>/文档/deepseek-harness/default-workspace/bonsai2-ninfer-3060-agent-linux/.store/build/build-sm86/apps/ninfer-serve

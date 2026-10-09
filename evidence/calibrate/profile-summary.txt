@@ -1,0 +1,2 @@
+# schema = ninfer.device-route-profiles schema_version = 2
+- key=0 hardware_class='nvidia-geforce-rtx-3060-sm86' multiprocessors=28 origin='ninfer-calibrate on NVIDIA GeForce RTX 3060'

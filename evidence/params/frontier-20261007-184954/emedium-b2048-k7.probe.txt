@@ -1,0 +1,7 @@
+# 复读锁死探针 base=http://127.0.0.1:8098 model=bonsai2-27b rounds=4 err=notfound
+  K  prompt   out    sec  rounds
+  4    1227    55    1.2  ['OK(read)', 'OK(read)', 'OK(bash)', 'OK(bash)']
+  6    1476    56    1.2  ['OK(read)', 'OK(bash)', 'OK(bash)', 'OK(read)']
+ 10    2048    80    1.7  ['LOCKED(byte-identical repeat)', 'OK(read)', 'OK(bash)', 'OK(read)']  <== LOCKED
+
+[FAIL] K=[10] 进入复读锁死吸引子。检查服务配置：--greedy 必须不在，采样（--temperature/--top-p/--top-k）应生效；`--default-thinking-budget` 是收口机制而非质量帽，必须与 max_tokens 配对（预算 + 工具调用载荷 ≤ max_tokens，见 L27）。

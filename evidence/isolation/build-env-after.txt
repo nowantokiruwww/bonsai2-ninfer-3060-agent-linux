@@ -1,0 +1,20 @@
+
+# 构建期门禁通过后的环境
+CUDA_HOME=/home/<user>/文档/deepseek-harness/default-workspace/bonsai2-ninfer-3060-agent-linux/.store/toolchain/cuda-13.1
+CUDACXX=/home/<user>/文档/deepseek-harness/default-workspace/bonsai2-ninfer-3060-agent-linux/.store/toolchain/cuda-13.1/bin/nvcc
+PATH=/home/<user>/文档/deepseek-harness/default-workspace/bonsai2-ninfer-3060-agent-linux/.store/toolchain/cuda-13.1/bin:/home/<user>/文档/deepseek-harness/default-workspace/bonsai2-ninfer-3060-agent-linux/.store/toolchain/cuda-13.1/bin:/home/<user>/.nvm/versions/node/v22.23.3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/snap/bin
+
+# 构建期门禁通过后的环境
+CUDA_HOME=/home/<user>/文档/deepseek-harness/default-workspace/bonsai2-ninfer-3060-agent-linux/.store/toolchain/cuda-13.1
+CUDACXX=/home/<user>/文档/deepseek-harness/default-workspace/bonsai2-ninfer-3060-agent-linux/.store/toolchain/cuda-13.1/bin/nvcc
+PATH=/home/<user>/文档/deepseek-harness/default-workspace/bonsai2-ninfer-3060-agent-linux/.store/toolchain/cuda-13.1/bin:/home/<user>/.nvm/versions/node/v22.23.3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/snap/bin
+
+# 构建期门禁通过后的环境
+CUDA_HOME=/home/<user>/文档/deepseek-harness/default-workspace/bonsai2-ninfer-3060-agent-linux/.store/toolchain/cuda-13.1
+CUDACXX=/home/<user>/文档/deepseek-harness/default-workspace/bonsai2-ninfer-3060-agent-linux/.store/toolchain/cuda-13.1/bin/nvcc
+PATH=/home/<user>/文档/deepseek-harness/default-workspace/bonsai2-ninfer-3060-agent-linux/.store/toolchain/cuda-13.1/bin:/home/<user>/.nvm/versions/node/v22.23.3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/snap/bin
+
+# 构建期门禁通过后的环境
+CUDA_HOME=/home/<user>/文档/deepseek-harness/default-workspace/bonsai2-ninfer-3060-agent-linux/.store/toolchain/cuda-13.1
+CUDACXX=/home/<user>/文档/deepseek-harness/default-workspace/bonsai2-ninfer-3060-agent-linux/.store/toolchain/cuda-13.1/bin/nvcc
+PATH=/home/<user>/文档/deepseek-harness/default-workspace/bonsai2-ninfer-3060-agent-linux/.store/toolchain/cuda-13.1/bin:/home/<user>/.nvm/versions/node/v22.23.3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/snap/bin

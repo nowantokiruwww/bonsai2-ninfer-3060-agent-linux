@@ -1,0 +1,35 @@
+# 复读锁死探针 base=http://127.0.0.1:8098 model=bonsai2-27b rounds=4 err=notfound
+  K  prompt   out    sec  rounds
+  4    1228    93    2.0  ['OK(read)', 'OK(bash)', 'OK(bash)', 'OK(bash)']
+  6    1537    65    1.3  ['OK(bash)', 'LOCKED(byte-identical repeat)', 'OK(read)', 'OK(bash)']  <== LOCKED
+ 10    2008    58    1.5  ['EDIT-OTHER', 'OK(read)', 'OK(bash)', 'OK(read)']
+
+[FAIL] K=[6] 进入复读锁死吸引子。检查服务配置：--greedy 必须不在，采样（--temperature/--top-p/--top-k）应生效；`--default-thinking-budget` 是收口机制而非质量帽，必须与 max_tokens 配对（预算 + 工具调用载荷 ≤ max_tokens，见 L27）。
+# 复读锁死探针 base=http://127.0.0.1:8098 model=bonsai2-27b rounds=4 err=notfound
+  K  prompt   out    sec  rounds
+  4    1228    89    1.6  ['OK(read)', 'OK(bash)', 'OK(bash)', 'OK(read)']
+  6    1480    68    1.5  ['OK(read)', 'OK(read)', 'OK(bash)', 'OK(bash)']
+ 10    2066    44    1.1  ['LOCKED(byte-identical repeat)', 'OK(bash)', 'OK(bash)', 'OK(bash)']  <== LOCKED
+
+[FAIL] K=[10] 进入复读锁死吸引子。检查服务配置：--greedy 必须不在，采样（--temperature/--top-p/--top-k）应生效；`--default-thinking-budget` 是收口机制而非质量帽，必须与 max_tokens 配对（预算 + 工具调用载荷 ≤ max_tokens，见 L27）。
+# 复读锁死探针 base=http://127.0.0.1:8098 model=bonsai2-27b rounds=4 err=notfound
+  K  prompt   out    sec  rounds
+  4    1200   173    3.5  ['OK(read)', 'OK(bash)', 'OK(bash)', 'OK(bash)']
+  6    1529    81    1.6  ['EDIT-OTHER', 'OK(bash)', 'OK(bash)', 'EDIT-OTHER']
+ 10    2024   257    5.2  ['OK(read)', 'OK(bash)', 'OK(bash)', 'OK(bash)']
+
+[PASS] 所有 K 均未锁死，模型会改换策略。
+# 复读锁死探针 base=http://127.0.0.1:8098 model=bonsai2-27b rounds=4 err=notfound
+  K  prompt   out    sec  rounds
+  4    1222    89    2.1  ['OK(read)', 'OK(bash)', 'OK(bash)', 'OK(bash)']
+  6    1483    60    1.8  ['OK(read)', 'OK(bash)', 'OK(bash)', 'OK(bash)']
+ 10    1985    62    1.4  ['OK(read)', 'OK(read)', 'OK(read)', 'OK(bash)']
+
+[PASS] 所有 K 均未锁死，模型会改换策略。
+# 复读锁死探针 base=http://127.0.0.1:8098 model=bonsai2-27b rounds=4 err=notfound
+  K  prompt   out    sec  rounds
+  4    1215    65    1.4  ['OK(read)', 'OK(bash)', 'OK(bash)', 'OK(bash)']
+  6    1537    96    1.9  ['OK(read)', 'LOCKED(byte-identical repeat)', 'OK(bash)', 'OK(bash)']  <== LOCKED
+ 10    2030    71    1.7  ['EDIT-OTHER', 'OK(read)', 'OK(read)', 'OK(bash)']
+
+[FAIL] K=[6] 进入复读锁死吸引子。检查服务配置：--greedy 必须不在，采样（--temperature/--top-p/--top-k）应生效；`--default-thinking-budget` 是收口机制而非质量帽，必须与 max_tokens 配对（预算 + 工具调用载荷 ≤ max_tokens，见 L27）。

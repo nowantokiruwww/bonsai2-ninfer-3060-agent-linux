@@ -1,0 +1,7 @@
+# profile 污染基线（Phase 0 冻结）
+# 目的：证明整个实验过程中 ~/.cache/ninfer 未被 NInfer 读取/写入
+path=/home/<user>/.cache/ninfer/device-profiles.json
+bytes=7771
+mtime=2026-10-05 17:03:35.028956106 +0800
+sha256=8df4a539eb3ef042f8e98c19266a2090dc9bfff959d9ad98f81b0faec6049087
+frozen_at=2026-10-06T18:48:22+0800

@@ -1,0 +1,18 @@
+# serve 形态
+binary        = /home/<user>/文档/deepseek-harness/default-workspace/bonsai2-ninfer-3060-agent-linux/.store/build/build-sm86/apps/ninfer-serve (727945672 B, sha256=7ebf2ebf6c086f0f…)
+model         = /home/<user>/文档/deepseek-harness/default-workspace/bonsai2-ninfer-3060-agent-linux/.store/models/Ternary-Bonsai-2-27B-ninfer-v3.ninfer
+model_sha256  = cdc4810b0ff17c40d0f62cf214b6e0bcd08346e9eb05ca53371507037793c14a
+gpu_uuid      = GPU-<redacted>-62f6-d10e-9cd0-26d071ac1974
+device_profiles = /home/<user>/文档/deepseek-harness/default-workspace/bonsai2-ninfer-3060-agent-linux/profiles/device-profiles.json
+kv_dtype      = rk2v4-e8
+kv_capacity   = 76768
+extra_flags   = --max-concurrency 1 --no-thinking --greedy
+endpoint      = http://127.0.0.1:8098/v1
+# 环境记账
+index, uuid, name, memory.used [MiB], memory.total [MiB]
+0, GPU-<redacted>-62f6-d10e-9cd0-26d071ac1974, NVIDIA GeForce RTX 3060, 10505 MiB, 12288 MiB
+1, GPU-<redacted>-085f-e807-9991-89e04ecb37cb, Tesla V100-SXM2-16GB, 10088 MiB, 16384 MiB
+index, name, pcie.link.gen.current, pcie.link.width.current, pcie.link.gen.max, pcie.link.width.max
+0, NVIDIA GeForce RTX 3060, 2, 4, 2, 16
+1, Tesla V100-SXM2-16GB, 3, 16, 3, 16
+[serve] /home/<user>/文档/deepseek-harness/default-workspace/bonsai2-ninfer-3060-agent-linux/.store/build/build-sm86/apps/ninfer-serve /home/<user>/文档/deepseek-harness/default-workspace/bonsai2-ninfer-3060-agent-linux/.store/models/Ternary-Bonsai-2-27B-ninfer-v3.ninfer --host 127.0.0.1 --port 8098 --model-id bonsai2-27b --max-context 76768 --kv-capacity 76768 --kv-dtype rk2v4-e8 --spec dflash2 --draft-tokens 7 --max-concurrency 1 --no-thinking --greedy

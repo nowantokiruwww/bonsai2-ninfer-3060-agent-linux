@@ -1,0 +1,23 @@
+# 构建期内存压力诊断（Phase 5 中途）
+at=2026-10-06T19:52:37+0800  elapsed_min=43
+
+               total        used        free      shared  buff/cache   available
+内存：          23Gi        15Gi       4.4Gi       412Mi       3.1Gi       7.4Gi
+交换：         8.0Gi       6.2Gi       1.8Gi
+
+## 并行编译进程的 RSS
+1047946     169 2889512 ptxas
+1048040      50 2197560 ptxas
+1048198       7 1041256 cicc
+1047924     192 921648 cicc
+1048208       3 524908 cicc
+1037296    2618  6628 ninja
+1047809     308  6520 nvcc
+1048176      12  6520 nvcc
+1048190       8  6520 nvcc
+1047229     831  6516 nvcc
+
+## 观测到的吞吐
+19:41 -> 19:52 只产出 3 个 .o（0.27 文件/分钟）；vmstat 显示 CPU id=41% 却有 ~14000 cs/s
+→ 结论：6 路并行 nvcc 时单个 ptxas RSS 峰值约 2.8GB，6 路约 17GB，
+  叠加 llama-server 3.3GB + firefox 0.9GB + 桌面约 1GB，超过 23GB 物理内存 → swap 抖动。

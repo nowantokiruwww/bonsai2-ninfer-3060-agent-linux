@@ -1,0 +1,6 @@
+# host build deps
+gcc-13 gcc-13 (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0
+cmake cmake version 3.28.3
+ninja 1.11.1
+libavcodec 60.31.102 / libavformat 60.16.100 / libavutil 58.29.100 / libswscale 7.5.100
+libcurl 8.5.0 / zlib 1.3

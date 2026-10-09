@@ -1,0 +1,96 @@
+{
+ "model": "bonsai2-27b",
+ "messages": [
+  {
+   "role": "system",
+   "content": "You are a coding agent. Complete the user's request using the provided tools. Write files with the write tool."
+  },
+  {
+   "role": "user",
+   "content": "写一个单文件 HTML 页面 bike.html，用内联 SVG 画一辆自行车：两个车轮、车架三角、车把、坐垫、脚踏曲柄。所有坐标必须严格对齐（轮心距、链条、对称性都要对），页面要能在浏览器直接打开。写完后用 write 工具保存。"
+  }
+ ],
+ "tools": [
+  {
+   "type": "function",
+   "function": {
+    "name": "read",
+    "description": "Read a UTF-8 text file.",
+    "parameters": {
+     "type": "object",
+     "properties": {
+      "file_path": {
+       "type": "string"
+      }
+     },
+     "required": [
+      "file_path"
+     ]
+    }
+   }
+  },
+  {
+   "type": "function",
+   "function": {
+    "name": "write",
+    "description": "Create or fully replace a UTF-8 text file.",
+    "parameters": {
+     "type": "object",
+     "properties": {
+      "file_path": {
+       "type": "string"
+      },
+      "content": {
+       "type": "string"
+      }
+     },
+     "required": [
+      "file_path",
+      "content"
+     ]
+    }
+   }
+  },
+  {
+   "type": "function",
+   "function": {
+    "name": "bash",
+    "description": "Execute a bash command.",
+    "parameters": {
+     "type": "object",
+     "properties": {
+      "command": {
+       "type": "string"
+      }
+     },
+     "required": [
+      "command"
+     ]
+    }
+   }
+  },
+  {
+   "type": "function",
+   "function": {
+    "name": "glob",
+    "description": "Find files by glob pattern.",
+    "parameters": {
+     "type": "object",
+     "properties": {
+      "pattern": {
+       "type": "string"
+      }
+     },
+     "required": [
+      "pattern"
+     ]
+    }
+   }
+  }
+ ],
+ "temperature": 1.0,
+ "top_p": 0.95,
+ "top_k": 20,
+ "max_tokens": 16384,
+ "stream": false
+}

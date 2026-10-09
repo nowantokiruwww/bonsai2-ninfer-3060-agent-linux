@@ -1,0 +1,3 @@
+{"arm": "eminimal-b512-k7", "run": 1, "http": "200", "wall_s": 49.09, "finish_reason": "tool_calls", "completion_tokens": 3646, "tool_calls": 1, "tool_name": "write", "args_chars": 6513, "content_chars": 28, "reasoning_chars": 1677, "args_tail_ok": true}
+{"arm": "eminimal-b512-k7", "run": 2, "http": "200", "wall_s": 43.38, "finish_reason": "tool_calls", "completion_tokens": 3374, "tool_calls": 1, "tool_name": "write", "args_chars": 6210, "content_chars": 0, "reasoning_chars": 1587, "args_tail_ok": true}
+{"arm": "eminimal-b512-k7", "run": 3, "http": "200", "wall_s": 39.48, "finish_reason": "tool_calls", "completion_tokens": 3097, "tool_calls": 1, "tool_name": "write", "args_chars": 5325, "content_chars": 0, "reasoning_chars": 1696, "args_tail_ok": true}

@@ -1,0 +1,35 @@
+{
+  "repeats": 3,
+  "max_tokens": 420,
+  "serve_extra": [
+    "--max-concurrency",
+    "1",
+    "--no-thinking",
+    "--greedy",
+    "--lm-head-draft"
+  ],
+  "arms": {
+    "baseline": {
+      "error": "服务未就绪"
+    },
+    "dflash2_k7": {
+      "error": "服务未就绪"
+    }
+  },
+  "verdict": {
+    "P1_repeat": {
+      "baseline_stable": null,
+      "spec_stable": null,
+      "across_equal": true
+    },
+    "P2_normal": {
+      "baseline_stable": null,
+      "spec_stable": null,
+      "across_equal": true
+    }
+  },
+  "conclusion": [
+    "P1_repeat: 基线臂自身就不可复现 → 引擎/服务非确定，与投机无关",
+    "P2_normal: 基线臂自身就不可复现 → 引擎/服务非确定，与投机无关"
+  ]
+}

@@ -1,0 +1,3 @@
+arm	effort	budget	k	started_ok	ready_s	probe
+emedium-b4096-k7	medium	4096	7	dry	-	-
+emedium-b512-k7	medium	512	7	dry	-	-

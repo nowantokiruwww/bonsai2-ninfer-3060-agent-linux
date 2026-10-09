@@ -1,0 +1,5 @@
+path=/home/<user>/.cache/ninfer/device-profiles.json
+bytes=7771
+mtime=2026-10-05 17:03:35.028956106 +0800
+sha256=8df4a539eb3ef042f8e98c19266a2090dc9bfff959d9ad98f81b0faec6049087
+frozen_at=2026-10-06T21:08:38+0800

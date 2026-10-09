@@ -33,6 +33,7 @@
 - [参数怎么调](#参数怎么调)
 - [速度的真相（先读这个）](#速度的真相先读这个)
 - [仓库结构](#仓库结构)
+- [结论是怎么得出的](#结论是怎么得出的)
 - [版本演化：旧版本透明化](#版本演化旧版本透明化)
 - [常见问题](#常见问题)
 - [文档索引](#文档索引)
@@ -476,11 +477,20 @@ bonsai2-ninfer-3060-agent-linux/
 │   ├── install-service.sh      systemd 用户服务
 │   ├── verify.sh               自检：证明仓库自包含
 │   ├── make-release.sh         打 Release 附件（压缩 + 分卷）
-│   └── publish-release.sh      把附件传到 GitHub Release（要 GITHUB_TOKEN）
+│   ├── publish-release.sh      把附件传到 GitHub Release（要 GITHUB_TOKEN）
+│   └── build/                  ★ 编译期流水线（00-baseline → 99-auto-pipeline）——历史，不是部署路径
+│
+├── agent/
+│   ├── agent_accept.py         agent 场景验收 A1–A8
+│   ├── kvgate.py               KV 量化容量门禁
+│   └── correctness_control.py  投机解码无损性对照
 │
 ├── config/
 │   ├── runtime.env             运行配置（唯一调参入口，install 时生成）
-│   └── release.env             下载地址（默认已指向本仓库 Release，一般不用改）
+│   ├── release.env             下载地址（默认已指向本仓库 Release，一般不用改）
+│   ├── env.sh                  编译期流水线的唯一输入声明（上游 commit、模型 sha256、CUDA 组件）
+│   ├── toolchain.lock          编译期 CUDA 组件的精确版本与 sha256
+│   └── model.lock              模型工件的 revision / 字节数 / sha256 实测结果
 │
 ├── docker/
 │   ├── deploy.sh               ★ 一键部署：安装 → 构建 → 运行（只做编排）
@@ -499,7 +509,14 @@ bonsai2-ninfer-3060-agent-linux/
 │   ├── AGENT-EXPERIENCE.md     agent 场景验收（A1–A8）
 │   ├── LINEAGE.md              上游血缘：哪个 fork、哪个 commit、为什么
 │   ├── METHODOLOGY.md          方法论：怎么保证结论可信
+│   ├── BUILD.md                ★ 从零编译引擎的完整配方
+│   ├── EVIDENCE.md             ★ 证据索引：每条结论对应哪个文件
+│   ├── PRIVACY.md              证据里的身份信息怎么脱敏
 │   └── params/                 两份参数实测报告（原始数据与结论）
+│
+├── evidence/                   ★ 210 个原始日志/JSON —— 病历里每条结论的可点开验证
+├── profiles/                   3060 的设备标定结果（ninfer-calibrate 产出）
+├── patches/                    对引擎源码的改动：当前为空，README 说明为什么为空
 │
 ├── runtime/                    ← 安装后出现：引擎载荷（bin/ lib/ agent/ profiles/）
 ├── models/                     ← 安装后出现：模型权重
@@ -507,6 +524,23 @@ bonsai2-ninfer-3060-agent-linux/
 ```
 
 **`runtime/` 和 `models/` 一开始是空的**，`install.sh` 会把它们填上。
+
+---
+
+## 结论是怎么得出的
+
+README 里的每个数字都有出处，不是"作者说快"：
+
+- **`evidence/`** —— 210 个原始命令输出与 JSON。`docs/PORTING-LEDGER.md` 里每条病历都指向
+  其中一个文件，点开就能验证。索引见 [`docs/EVIDENCE.md`](docs/EVIDENCE.md)。
+- **`config/env.sh` + `config/toolchain.lock` + `config/model.lock`** —— 每个外部输入
+  （上游 commit、CUDA 组件版本与 sha256、模型 revision 与 sha256）都有声明和校验，不匹配即失败。
+- **`patches/`** —— 对引擎源码的改动，**当前为空**。这不是疏漏：这条源码线已经具备 sm_86
+  在 Linux 上构建所需的一切，见 `patches/README.md`。
+- **`scripts/build/`** —— 从 `00-baseline` 到 `99-auto-pipeline` 的完整流水线，
+  每一步的产出写进 `evidence/`。编译配方见 [`docs/BUILD.md`](docs/BUILD.md)。
+- **`scripts/verify.sh`** —— 把"仓库自包含"当成断言来跑：126 项检查，包括
+  禁止引用仓库外的绝对路径、禁止泄露身份标识、README 里出现的每个命令必须真实存在。
 
 ---
 
@@ -576,6 +610,9 @@ bonsai2-ninfer-3060-agent-linux/
 | [`docs/AGENT-EXPERIENCE.md`](docs/AGENT-EXPERIENCE.md) | agent 场景验收 A1–A8（工具调用、长上下文、稳定性、复读门禁） |
 | [`docs/LINEAGE.md`](docs/LINEAGE.md) | 上游血缘：`Neroued/ninfer` → … → `iamwavecut/ninfer-all`，以及为什么必须换源码线 |
 | [`docs/METHODOLOGY.md`](docs/METHODOLOGY.md) | 方法论：去黑盒化、可重放、三道门禁 |
+| [`docs/BUILD.md`](docs/BUILD.md) | ★ 从零编译引擎的完整配方：工具链、cmake 命令、产物门禁、为什么 V100 编不出来 |
+| [`docs/EVIDENCE.md`](docs/EVIDENCE.md) | ★ 证据索引：病历里的每一条结论 → 哪个文件可以点开验证（210 个文件） |
+| [`docs/PRIVACY.md`](docs/PRIVACY.md) | 证据文件里哪些信息被脱敏、为什么、以及怎么自己重新脱敏 |
 | [`docs/params/REPORT-param-audit-20261007.md`](docs/params/REPORT-param-audit-20261007.md) | 参数审计：六臂矩阵、探针、503 陷阱 |
 | [`docs/params/REPORT-tune-ab-20261007.md`](docs/params/REPORT-tune-ab-20261007.md) | 三臂 A/B：带宽地板的推算过程 |
 

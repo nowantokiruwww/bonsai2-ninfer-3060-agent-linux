@@ -1,0 +1,7 @@
+arm	effort	budget	k	started_ok	ready_s	probe
+emedium-b4096-k7	medium	4096	7	OK	32	PASS
+emedium-b512-k7	medium	512	7	OK	34	PASS
+elow-b4096-k7	low	4096	7	OK	39	PASS
+elow-b512-k7	low	512	7	OK	31	PASS
+eminimal-b4096-k7	minimal	4096	7	OK	39	PASS
+eminimal-b512-k7	minimal	512	7	OK	31	PASS

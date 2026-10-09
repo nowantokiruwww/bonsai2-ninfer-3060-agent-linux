@@ -47,7 +47,7 @@ bench 的口径对应的是"压榨峰值速度"；本项目要的是"**可用性
 ### 1. 架构白名单 + `NINFER_SM_COUNT=28`
 - **bench 原文**：官方 CMake 只编 sm_89/sm_120，需加 sm_86；另有按 SM 数分支的逻辑，需 `NINFER_SM_COUNT` 覆盖为 28。
 - **Linux 实际**：所选源码线（`iamwavecut/ninfer-all`）**本身已接受 `86`**（`CMakeLists.txt:14` 的 `^(80|86|89|120a)$`），且**根本没有 `NINFER_SM_COUNT` 这个宏**（grep 无命中）。
-- **等价替换**：该线改用"按实测 device profile 选 route"的机制。RTX 3060（28 SM）**没有内置 profile**（`docs/device-profiles.md:21` 只覆盖 3090/4090/5090/PRO 6000），故用仓库自带的 `ninfer-calibrate` 标定 28-SM profile（`scripts/70-calibrate.sh`），并与 `--device-profile off` 的编译期表做双向对照。
+- **等价替换**：该线改用"按实测 device profile 选 route"的机制。RTX 3060（28 SM）**没有内置 profile**（`docs/device-profiles.md:21` 只覆盖 3090/4090/5090/PRO 6000），故用仓库自带的 `ninfer-calibrate` 标定 28-SM profile（`scripts/build/70-calibrate.sh`），并与 `--device-profile off` 的编译期表做双向对照。
 - **类别**：**等价替换**（同一意图，机制不同）。
 
 ### 2. FP8 墙
@@ -58,7 +58,7 @@ bench 的口径对应的是"压榨峰值速度"；本项目要的是"**可用性
 ### 3. 12G 拒启 / `--kv-capacity`
 - **bench 原文**：dflash2 草稿权重 9.10 GiB，`--kv-capacity auto` 强制多留 1 GiB → 12G 卡拒绝启动，必须显式容量（他们用 `24576` / `int8`）。
 - **Linux 实际**：容量强依赖 `--kv-dtype`。反例：本机旧服务在同一张 12G 卡上用 `--kv-capacity 76768 --kv-dtype rk2v4-e8` **跑通过**。
-- **处理**：把 `(kv-dtype, kv-capacity)` 当**可行性门禁实测扫描**（`scripts/75-kv-gate.sh` + `agent/kvgate.py`），二分出"能启动 + 连续 3 次请求无错"的最大容量；并分别在**带桌面**与**TTY 无桌面**两态各跑一次。bench 的 `24576` 只作为"要求对齐的目标值"。
+- **处理**：把 `(kv-dtype, kv-capacity)` 当**可行性门禁实测扫描**（`scripts/build/75-kv-gate.sh` + `agent/kvgate.py`），二分出"能启动 + 连续 3 次请求无错"的最大容量；并分别在**带桌面**与**TTY 无桌面**两态各跑一次。bench 的 `24576` 只作为"要求对齐的目标值"。
 - **类别**：**等价替换 + 口径修正**（把别人的常数换成自己的实测）。
 
 ---

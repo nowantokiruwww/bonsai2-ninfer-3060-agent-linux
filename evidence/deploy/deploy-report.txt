@@ -1,0 +1,130 @@
+### /home/<user>/.config/systemd/user/bonsai2-ninfer-3060.service
+# 由 scripts/97-deploy-service.sh 生成（不要手改；改 config/runtime.env）
+# 引擎: iamwavecut/ninfer-all @ 796f985007775f4bc7cfde53804fa22e7d60dbf8
+[Unit]
+Description=bonsai2-ninfer-3060 — NInfer + Ternary-Bonsai-2-27B on RTX 3060 (port 8098)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/<user>/bonsai-ninfer-3060
+EnvironmentFile=/home/<user>/bonsai-ninfer-3060/config/runtime.env
+Environment=CUDA_VISIBLE_DEVICES=GPU-<redacted>-62f6-d10e-9cd0-26d071ac1974
+Environment=CUDA_DEVICE_ORDER=PCI_BUS_ID
+Environment=NINFER_DEVICE_PROFILES=/home/<user>/bonsai-ninfer-3060/profiles/device-profiles.json
+# 随包发的 CUDA 运行库优先（二进制 RUNPATH 指向构建时的绝对路径，换机器就没了）
+Environment=LD_LIBRARY_PATH=/home/<user>/bonsai-ninfer-3060/lib
+# 日志交给 systemd 收集（--foreground 不自己重定向）
+# 用显式子命令形式（runtime-tools.sh serve）而不是 serve.sh 软链接：
+# 两种都支持（软链接按 $0 basename 推断子命令），但单元里显式最稳。
+# ⚠ 上面这行的 $0 必须转义：本 heredoc 未加引号，裸写 scripts/97-deploy-service.sh 会被展开成脚本自身路径，
+#   生成出来的单元注释就变成「按 scripts/97-deploy-service.sh basename 推断」——错的。
+ExecStart=/home/<user>/bonsai-ninfer-3060/runtime-tools.sh serve --foreground
+# 注意：不能用 SIGINT。引擎对单次 SIGINT 不退出（它打印 "Press Ctrl+C again within
+# 5 s to close"，要求按两次），于是每次 stop 都要干等 TimeoutStopSec 超时再被 SIGKILL
+# ——实测 63 秒、单元落成 failed。SIGTERM 实测 5 秒干净退出、显存立即释放。见 L24。
+KillSignal=SIGTERM
+KillMode=mixed
+TimeoutStopSec=60
+Restart=on-failure
+RestartSec=10
+StandardOutput=append:/home/<user>/bonsai-ninfer-3060/logs/service.log
+StandardError=append:/home/<user>/bonsai-ninfer-3060/logs/service.log
+
+[Install]
+WantedBy=default.target
+
+### config/runtime.env
+# bonsai2-ninfer-3060 运行时参数 —— **唯一调参入口**（由 scripts/97-deploy-service.sh 生成）
+#
+# ★ 唯一值得调的维度：上下文 ↔ 显存余量。只改下面 KV_CAPACITY 一行。
+#   ⚠ 改它之后**必须同步改** ~/.dsh/profiles/web/cordis.patch.yml 里
+#     provider "bonsai2-3060" 的 contextWindow / defaultContextWindow，否则两者不一致。
+#
+# ⚠⚠ 最重要的一条实测教训：**KV 上限不是这张卡的常数，它随"桌面当前占多少显存"变化。**
+#   同一个 rk2v4-e8 @ 76768：
+#     * 空闲 11,278 MiB 时（2026-10-06 21:35）→ 起来过
+#     * 空闲 10,810 MiB 时（2026-10-07 03:38）→ 启动失败，日志只有
+#       「ERROR startup failed | finalizing target | 31.8 ms」
+#   所以"以前能起"不等于"现在能起"。
+#
+# 2026-10-07 03:5x 在空闲 10,810 MiB 下实测的阶梯（投机恒开 dflash2 K=7）：
+#   rk2v4-e8 @ 76768  ✗       rk2v4-e8 @ 65536  ✓
+#   rk2v4-e8 @ 57344  ✓       rk2v4-e8 @ 49152  ✓  ← 当前值（两种桌面状态下都通过）
+#   rk4v4-e8 @ 49152  ✓       int8 @ 8192 ✓
+# 取 49152 而不是 65536：它在"空闲 11,278"与"空闲 10,810"两种桌面状态下都验证通过，
+# 有真实余量；65536 只在当前状态下验证过，桌面再长一点就会重演上面的启动失败。
+#
+# 想回到更大的上下文：先关掉占显存的程序，用 scripts/75-kv-gate.sh 重测上限，
+# 再改这里 + 同步 DSH 的 contextWindow。
+#
+# --spec dflash2 --draft-tokens 7 是必用项，不作为可调开关。
+# 参考：投机开着权重 7.99 GiB，关掉 6.70 GiB（草稿模型多占约 1.3 GiB）。
+PREFIX=/home/<user>/bonsai-ninfer-3060
+HOST=127.0.0.1
+PORT=8098
+MODEL_ID=bonsai2-27b
+MODEL_PATH=/home/<user>/bonsai-ninfer-3060/models/Ternary-Bonsai-2-27B-ninfer-v3.ninfer
+GPU_UUID=GPU-<redacted>-62f6-d10e-9cd0-26d071ac1974
+CUDA_VISIBLE_DEVICES=GPU-<redacted>-62f6-d10e-9cd0-26d071ac1974
+CUDA_DEVICE_ORDER=PCI_BUS_ID
+NINFER_DEVICE_PROFILES=/home/<user>/bonsai-ninfer-3060/profiles/device-profiles.json
+KV_DTYPE=rk2v4-e8
+KV_CAPACITY=49152
+# ⚠ 含空格的值必须加引号：本文件既被 serve.sh 用 source 读（bash），又是 systemd 的
+#   EnvironmentFile。不加引号会被 bash 拆成"赋值 + 执行命令"，实测报
+#   「<prefix>/config/runtime.env: 行 26: dflash2: 未找到命令」 且服务起不来。
+SPEC_FLAGS="--spec dflash2 --draft-tokens 7"
+#
+# ── 思考与采样（2026-10-07 L26/L27/L28 实测定档；改前先读 PORTING-LEDGER）──
+# 采样档对齐 V100/llama.cpp-prism：--temperature/--top-p/--top-k 对应 V100 的
+#   --temp 1.0 --top-p 0.95 --top-k 20。刻意**不用 --greedy**：它是强制 argmax、
+#   无任何随机逃逸路径，是 L26 复读锁死的放大器。
+# ⚠ --no-thinking 也**不要加回来**：--no-thinking 与 --greedy 的组合实测会让模型把同一条
+#   工具调用逐字节重复 43 次、harness 注入 10 次提醒全部无效、永不自愈（L26 实战事故）。
+# --default-thinking-budget 不是"质量帽"而是**收口机制**：到点服务端主动补思考终止标记
+#   逼模型作答。硬约束是「思考预算 + 工具调用载荷(约 6,100 tok) <= DSH 侧 maxTokens」。
+# 为什么是 1024 而不是 4096（L28 实测，固定 agent 任务每档 3 次）：
+#   4096 -> 中位墙钟 67.8s、真正写出文件 1/3；1024 -> 44.2s、3/3；
+#   512  -> 40.9s、2/3，但单轮重复率高（6/15 = 40%，四档里最差，不建议当默认）。
+#   decode tok/s 几乎不随预算变（58-83 全域），差的是"被烧掉多少思考 token"。
+# ⚠ ngram 别当速度旋钮：--ngram-draft-tokens 在开 --spec 时默认就是 15（开），
+#   它在长思考档里只占全部接受 token 的 5.0%，与速度无关（L28）。
+#   早期版本这里写过"显式关掉 ngram（0 = 关闭）"，那是 13:0x 中间态的残留、且与事实不符。
+# --request-log-jsonl 是行为中性的取证开关（server_start/request_start/request_done/
+#   throughput 四类事件落盘，**不含 prompt 正文**），本轮把 40 tok/s 归因清楚全靠它，保留常开。
+EXTRA_FLAGS="--max-concurrency 1 --temperature 1.0 --top-p 0.95 --top-k 20 --default-reasoning-effort medium --default-thinking-budget 1024 --request-log-jsonl /home/<user>/bonsai-ninfer-3060/logs/request.jsonl"
+
+### systemctl status
+● bonsai2-ninfer-3060.service - bonsai2-ninfer-3060 — NInfer + Ternary-Bonsai-2-27B on RTX 3060 (port 8098)
+     Loaded: loaded (/home/<user>/.config/systemd/user/bonsai2-ninfer-3060.service; disabled; preset: enabled)
+     Active: active (running) since Wed 2026-10-07 20:08:17 CST; 33s ago
+   Main PID: 1208212 (ninfer-serve)
+      Tasks: 28 (limit: 25843)
+     Memory: 10.8G (peak: 10.8G)
+        CPU: 11.755s
+     CGroup: /user.slice/user-1000.slice/user@1000.service/app.slice/bonsai2-ninfer-3060.service
+             └─1208212 /home/<user>/bonsai-ninfer-3060/bin/ninfer-serve /home/<user>/bonsai-ninfer-3060/models/Ternary-Bonsai-2-27B-ninfer-v3.ninfer --host 127.0.0.1 --port 8098 --model-id bonsai2-27b --max-context 49152 --kv-capacity 49152 --kv-dtype rk2v4-e8 --spec dflash2 --draft-tokens 7 --max-concurrency 1 --temperature 1.0 --top-p 0.95 --top-k 20 --default-reasoning-effort medium --default-thinking-budget 1024 --request-log-jsonl /home/<user>/bonsai-ninfer-3060/logs/request.jsonl
+
+10月 07 20:08:17 <user>-MS-7B89 systemd[1201143]: Started bonsai2-ninfer-3060.service - bonsai2-ninfer-3060 — NInfer + Ternary-Bonsai-2-27B on RTX 3060 (port 8098).
+
+### /v1/models
+{"data":[{"architecture":{"input_modalities":["text"],"output_modalities":["text"]},"context_length":49152,"context_window":49152,"created":1791374931,"id":"bonsai2-27b","max_model_len":49152,"meta":{"ftype":"bf16+fp32+int32+q4_g64_fp16+q5_g64_fp16+q6_g64_fp16+q8_g32_fp16+t2_g128_fp16","n_ctx":49152,"n_ctx_train":262144,"n_embd":5120,"n_params":30377080816,"n_vocab":248320,"size":9506793888},"modalities":{"vision":false},"object":"model","owned_by":"ninfer","status":{"args":["--host","127.0.0.1","--port","8098","--model-id","bonsai2-27b","--max-context","49152","--kv-capacity","49152","--kv-dtype","rk2v4-e8","--spec","dflash2","--draft-tokens","7","--max-concurrency","1","--temperature","1.0","--top-p","0.95","--top-k","20","--default-reasoning-effort","medium","--default-thinking-budget","1024","--request-log-jsonl","/home/<user>/bonsai-ninfer-3060/logs/request.jsonl"],"value":"loaded"}}],"object":"list"}
+### ldd（CUDA 库解析）
+	libcublas.so.13 => /home/<user>/文档/deepseek-harness/default-workspace/bonsai2-ninfer-3060-agent-linux/.store/toolchain/cuda-13.1/lib/libcublas.so.13 (0x00007fc852600000)
+	libcudart.so.13 => /home/<user>/文档/deepseek-harness/default-workspace/bonsai2-ninfer-3060-agent-linux/.store/toolchain/cuda-13.1/lib/libcudart.so.13 (0x00007fc852200000)
+	libcublasLt.so.13 => /home/<user>/文档/deepseek-harness/default-workspace/bonsai2-ninfer-3060-agent-linux/.store/toolchain/cuda-13.1/lib/libcublasLt.so.13 (0x00007fc826600000)
+
+### 显存
+index, uuid, memory.used [MiB], memory.total [MiB]
+0, GPU-<redacted>-62f6-d10e-9cd0-26d071ac1974, 10165 MiB, 12288 MiB
+1, GPU-<redacted>-085f-e807-9991-89e04ecb37cb, 5 MiB, 16384 MiB
+
+### PCIe
+index, name, pcie.link.gen.current, pcie.link.width.current
+0, NVIDIA GeForce RTX 3060, 2, 4
+1, Tesla V100-SXM2-16GB, 3, 16
+
+### 服务启动命令行（service.log 里 runtime-tools 打印的那行）
+2026-10-07 20:08:17  命令: /home/<user>/bonsai-ninfer-3060/bin/ninfer-serve /home/<user>/bonsai-ninfer-3060/models/Ternary-Bonsai-2-27B-ninfer-v3.ninfer --host 127.0.0.1 --port 8098 --model-id bonsai2-27b --max-context 49152 --kv-capacity 49152 --kv-dtype rk2v4-e8 --spec dflash2 --draft-tokens 7 --max-concurrency 1 --temperature 1.0 --top-p 0.95 --top-k 20 --default-reasoning-effort medium --default-thinking-budget 1024 --request-log-jsonl /home/<user>/bonsai-ninfer-3060/logs/request.jsonl

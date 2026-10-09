@@ -1,0 +1,76 @@
+{
+  "repeats": 3,
+  "max_tokens": 420,
+  "serve_extra": [
+    "--max-concurrency",
+    "1",
+    "--no-thinking",
+    "--greedy"
+  ],
+  "arms": {
+    "baseline": {
+      "P1_repeat": {
+        "md5s": [
+          "8e311aacb31e8e28e8fc6aad9cf8cdf3",
+          "8e311aacb31e8e28e8fc6aad9cf8cdf3",
+          "8e311aacb31e8e28e8fc6aad9cf8cdf3"
+        ],
+        "stable": true,
+        "chars_head": 544,
+        "tok_s": 32.2,
+        "text_head": "The quick brown fox jumps over the lazy dog.\nThe quick brown fox jumps over the lazy dog.\nThe quick "
+      },
+      "P2_normal": {
+        "md5s": [
+          "31357feca813576fe4a3122e9659bb91",
+          "31357feca813576fe4a3122e9659bb91",
+          "31357feca813576fe4a3122e9659bb91"
+        ],
+        "stable": true,
+        "chars_head": 405,
+        "tok_s": 34.9,
+        "text_head": "Mixture-of-Experts (MoE) models use a sparse routing mechanism that activates only a small subset of"
+      }
+    },
+    "dflash2_k7": {
+      "P1_repeat": {
+        "md5s": [
+          "8e311aacb31e8e28e8fc6aad9cf8cdf3",
+          "8e311aacb31e8e28e8fc6aad9cf8cdf3",
+          "8e311aacb31e8e28e8fc6aad9cf8cdf3"
+        ],
+        "stable": true,
+        "chars_head": 544,
+        "tok_s": 100.0,
+        "text_head": "The quick brown fox jumps over the lazy dog.\nThe quick brown fox jumps over the lazy dog.\nThe quick "
+      },
+      "P2_normal": {
+        "md5s": [
+          "e1f9ea6548fad49ae5652d7cc5856102",
+          "e1f9ea6548fad49ae5652d7cc5856102",
+          "e1f9ea6548fad49ae5652d7cc5856102"
+        ],
+        "stable": true,
+        "chars_head": 428,
+        "tok_s": 62.8,
+        "text_head": "Mixture-of-Experts (MoE) models partition the network into multiple specialized sub-networks, or \"ex"
+      }
+    }
+  },
+  "verdict": {
+    "P1_repeat": {
+      "baseline_stable": true,
+      "spec_stable": true,
+      "across_equal": true
+    },
+    "P2_normal": {
+      "baseline_stable": true,
+      "spec_stable": true,
+      "across_equal": false
+    }
+  },
+  "conclusion": [
+    "P1_repeat: 两臂一致",
+    "P2_normal: 两臂各自可复现，但彼此不同 → 投机路径改变了输出"
+  ]
+}

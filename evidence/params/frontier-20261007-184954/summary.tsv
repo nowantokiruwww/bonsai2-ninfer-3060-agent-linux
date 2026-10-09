@@ -1,0 +1,3 @@
+arm	effort	budget	k	started_ok	ready_s	probe
+emedium-b1024-k7	medium	1024	7	OK	35	FAIL
+emedium-b2048-k7	medium	2048	7	OK	32	FAIL

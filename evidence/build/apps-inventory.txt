@@ -1,0 +1,4 @@
+=== ninfer (724588968 B, sha256=73123b32b5f91cc1…) ===
+=== ninfer-serve (727945672 B, sha256=7ebf2ebf6c086f0f…) ===
+=== ninfer-calibrate (613776584 B, sha256=e2ff5e50699652d2…) ===
+=== ninfer-perplexity (724515800 B, sha256=b15e5a15762605a5…) ===

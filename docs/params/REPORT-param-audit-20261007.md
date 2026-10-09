@@ -10,7 +10,7 @@
 
 ## 1. 参数变更对账（谁在什么时候改了什么）
 
-`~/bonsai-ninfer-3060/logs/service.log` 的 `命令:` 行记录了该服务的 **14 次启动**：
+`evidence/deploy/deploy-report.txt` 的 `命令:` 行记录了该服务的 **14 次启动**：
 
 | 时间 | 谁 | 备注 |
 |---|---|---|
@@ -18,7 +18,7 @@
 | 13:04:06 / 13:05:25 / 13:06:34 / 13:08:32 / 13:10:35 / 13:11:32 / 13:14:21 | 另一会话 | L26 复读锁死修复期间的逐变量消元 |
 | 13:56:32 / 14:08:40 / 14:11:31 / 14:14:06 / 14:16:42 / 14:18:53 | 另一会话 | L27 档位对齐 V100 |
 
-`~/bonsai-ninfer-3060/config/runtime.env` 的 mtime 为 **2026-10-07 14:54:59**（注释），
+`config/runtime.env（由 ./install.sh 生成，不进版本库）` 的 mtime 为 **2026-10-07 14:54:59**（注释），
 unit 文件 mtime 仍是 **12:11:57**（我起完就没再动）。
 
 **我部署的（12:11:57）**：
@@ -105,7 +105,7 @@ ctx 20425 | decode 93.9 tok/s | 接受率 48.6% | 思考  512 | 输出 4614   �
 
 ## 3. 实测矩阵：预算 × 努力档（`evidence/params/frontier-*`）
 
-测量台 `scripts/93-param-frontier.sh`：与 unit 完全相同的环境直接前台拉起引擎，**每臂独立请求日志**，
+测量台 `scripts/build/93-param-frontier.sh`：与 unit 完全相同的环境直接前台拉起引擎，**每臂独立请求日志**，
 固定任务（DSH 形态的 agent 请求：写一个内联 SVG 的单文件 HTML + 4 个 tool 定义 + `max_tokens 16384`），
 采样固定为生产档 `t=1.0 / p=0.95 / k=20`、`--spec dflash2 --draft-tokens 7`、`rk2v4-e8 @ 49152`。
 
@@ -137,7 +137,7 @@ ctx 20425 | decode 93.9 tok/s | 接受率 48.6% | 思考  512 | 输出 4614   �
 
 ### 3.3 复读锁死探针
 
-`scripts/93-param-frontier.sh` 内置 1 次 `scripts/91-repeat-lock-probe.py --ks 4,6,10 --rounds 4`：
+`scripts/build/93-param-frontier.sh` 内置 1 次 `scripts/build/91-repeat-lock-probe.py --ks 4,6,10 --rounds 4`：
 
 | 预算 | 512 | 1024 | 2048 | 4096 |
 |---|---|---|---|---|
@@ -148,7 +148,7 @@ ctx 20425 | decode 93.9 tok/s | 接受率 48.6% | 思考  512 | 输出 4614   �
 2048 的 K=10：`LOCKED → OK(read) → OK(bash) → OK(read)`），
 而 L26 真锁死的签名是**连续 26 条请求逐字节相同、永不恢复**。
 采样态下偶发单轮重复本来就属抖动（L27.7 已记录该门禁在采样态下偏严）。
-为把抖动与真锁死分开，新增 `scripts/94-lock-probe-repeat.sh`：每档重复跑 5 次探针（每档 15 个判据），
+为把抖动与真锁死分开，新增 `scripts/build/94-lock-probe-repeat.sh`：每档重复跑 5 次探针（每档 15 个判据），
 统计锁死率与「连续 ≥3 轮不恢复」的真锁死次数。结果（`evidence/params/probe-repeat-20261007-185840`）：
 
 | 预算 | 判据数 | 单轮 LOCKED | 锁死率 | 探针 PASS/FAIL | **真锁死（≥3 轮连续不恢复）** |
@@ -200,7 +200,7 @@ ctx 20425 | decode 93.9 tok/s | 接受率 48.6% | 思考  512 | 输出 4614   �
 **1024 是唯一在「速度 / 产出 / 复读稳健性」三项上都不吃亏的档位。**
 512 虽然最快，但 40% 的单轮重复率不支持把它当生产默认（尤其是这张卡已经有 L26 前科）。
 
-> 给用户的对照口径：改 `~/bonsai-ninfer-3060/config/runtime.env` **一行**
+> 给用户的对照口径：改 `config/runtime.env（由 ./install.sh 生成，不进版本库）` **一行**
 > （`EXTRA_FLAGS` 里的 `--default-thinking-budget`），然后
 > `systemctl --user restart bonsai2-ninfer-3060.service`（停止语义已修为 SIGTERM，5 秒）。
 > `512` / `1024` / `2048` / `4096` 四档都实测可用，可按手感自行上下移。
@@ -209,5 +209,5 @@ ctx 20425 | decode 93.9 tok/s | 接受率 48.6% | 思考  512 | 输出 4614   �
 
 - 固定任务是**一个**玩具任务、每档 **n=3**：足以证明"预算 = 延迟的主要乘数"，**不足以**证明
   "1024 在真实 agent 任务上比 4096 更聪明"。产出质量那一列只有倾向性价值。
-- 真实任务的智力差异需要 DSH 端到端跑（`scripts/99-verify-dsh.sh`）才能评估，本轮未做。
+- 真实任务的智力差异需要 DSH 端到端跑（`scripts/build/99-verify-dsh.sh`）才能评估，本轮未做。
 - 复读数据 n=15/档，同样只作倾向性证据。

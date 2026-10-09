@@ -1,0 +1,7 @@
+# 复读锁死探针 base=http://127.0.0.1:8098 model=bonsai2-27b rounds=4 err=notfound
+  K  prompt   out    sec  rounds
+  4    1212    76    1.8  ['OK(read)', 'OK(bash)', 'OK(bash)', 'OK(read)']
+  6    1486    50    1.5  ['OK(bash)', 'OK(bash)', 'OK(bash)', 'OK(read)']
+ 10    2051    70    2.1  ['OK(read)', 'OK(bash)', 'OK(bash)', 'OK(bash)']
+
+[PASS] 所有 K 均未锁死，模型会改换策略。

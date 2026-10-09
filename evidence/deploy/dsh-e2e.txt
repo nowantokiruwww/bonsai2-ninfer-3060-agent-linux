@@ -1,0 +1,20 @@
+### DSH 端到端验证 2026-10-07T03:52:08+0800
+task      = Use the shell tool to run exactly: echo bonsai-ninfer-ok   — then reply with the command output and nothing else.
+overlay   = /home/<user>/bonsai-ninfer-3060/dsh-verify-overlay.yml
+baseURL   = http://127.0.0.1:8098/v1
+model     = bonsai2-27b   (contextWindow 49152)
+dsh_rc    = 0
+log_delta = 7 行（请求行 6，工具痕迹 3）
+verdict   = PASS
+
+### dsh 输出
+bonsai-ninfer-ok
+
+### 服务端新增日志
+2026-10-07 03:52:00.469  INFO  req#1 started | openai-chat stream | 2 messages | max output 64 | thinking off
+2026-10-07 03:52:00.482  INFO  req#2 started | openai-chat stream | 3 messages | max output 8,192 | thinking off | tools 24
+2026-10-07 03:52:01.284  INFO  req#1 done | openai-chat | stop token | prompt 150 | output 8 | cache 0 (0.0%) | TTFT 732 ms | total 848 ms | queue 24.0 ms | prefill 260.3 tok/s | decode 60.5 tok/s | dflash2 accepted 4/21 (19.0%)
+2026-10-07 03:52:04.818  INFO  throughput | 5.0s | prefill 567.6 tok/s (2,838 tok) | decode 1.4 tok/s (7 tok) | running 1 (prefill 1) | batch 1.00 | host 18.8% (941 ms)
+2026-10-07 03:52:08.166  INFO  req#2 done | openai-chat | tool calls 1 | prompt 5,757 | output 49 | cache 0 (0.0%) | TTFT 7.4s | total 7.7s | queue 928 ms | prefill 935.5 tok/s | decode 132.5 tok/s | dflash2 accepted 41/63 (65.1%)
+2026-10-07 03:52:08.430  INFO  req#3 started | openai-chat stream | 5 messages | max output 8,192 | thinking off | tools 24
+2026-10-07 03:52:08.822  INFO  req#3 done | openai-chat | stop token | prompt 5,828 | output 6 | cache 5,805 (99.6%, private endpoint) | TTFT 404 ms | total 445 ms | prefill 221.6 tok/s | decode 124.2 tok/s | dflash2 accepted 5/7 (71.4%)

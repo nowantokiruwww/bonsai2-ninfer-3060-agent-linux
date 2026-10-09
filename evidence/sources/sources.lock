@@ -1,0 +1,46 @@
+[ninfer-all]
+repo    = https://github.com/iamwavecut/ninfer-all.git
+commit  = 796f985007775f4bc7cfde53804fa22e7d60dbf8
+dir     = /home/<user>/文档/deepseek-harness/default-workspace/bonsai2-ninfer-3060-agent-linux/.store/src/ninfer-all
+describe= 796f985
+date    = 2026-10-06T08:34:13+02:00
+subject = docs: one campaign output rate for Flash-Next on two RTX 5090s
+VERSION = 0.12.0-rtx3090
+tree    = 91c8c547e860449d5cb4b69f68c31c1000c4a917
+shallow = true
+
+[ninfer-rtx30-bench]
+repo    = https://github.com/suanrongqieqiezi/ninfer-rtx30-bench.git
+commit  = c2f882ba274af6d31e941e81b114300a1dc9a657
+dir     = /home/<user>/文档/deepseek-harness/default-workspace/bonsai2-ninfer-3060-agent-linux/.store/refs/ninfer-rtx30-bench
+describe= c2f882b
+date    = 2026-10-01T14:58:05+08:00
+subject = docs: add attribution (Bilibili uploader Shen Sanshu; upstream NInfer/PrismML copyright note)
+tree    = 8957b7a34bf671b4b7a857f5d73cbe6dfc727927
+shallow = true
+
+[bench-repo-inventory]
+blob_count = 18
+has_source_code = 0
+has_build_files = 0
+has_patches     = 0
+has_dep_manifest= 0
+files:
+  .gitignore
+  README.md
+  bench/ab_lookup.py
+  bench/bench_draft_depth.py
+  bench/bench_prefill_focus.py
+  bench/bench_variants.py
+  results/3080Laptop/README.md
+  results/3080Laptop/ab_franken_serve.log
+  results/3080Laptop/ab_official_serve.log
+  results/3080Laptop/f_base_serve.log
+  results/3080Laptop/f_cublas_serve.log
+  results/3080Laptop/prefill_results.json
+  results/3080Laptop/variant_results.json
+  results/RTX3060-12G.md
+  scripts/_count_ptx.py
+  scripts/_verify_ptx.py
+  scripts/ab_compare.py
+  scripts/smoke_franken.py

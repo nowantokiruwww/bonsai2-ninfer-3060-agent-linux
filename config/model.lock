@@ -1,0 +1,10 @@
+[model]
+hf_repo   = WaveCut/Ternary-Bonsai-2-27B-NInfer-v3
+revision  = b85b33627b27b9757a5a094fc74785a53e99f8ee
+endpoint  = https://hf-mirror.com
+path      = $STORE/models/Ternary-Bonsai-2-27B-ninfer-v3.ninfer
+bytes     = 9520051456
+expected  = 9520051456
+sha256    = cdc4810b0ff17c40d0f62cf214b6e0bcd08346e9eb05ca53371507037793c14a
+expected  = cdc4810b0ff17c40d0f62cf214b6e0bcd08346e9eb05ca53371507037793c14a
+verdict   = PASS

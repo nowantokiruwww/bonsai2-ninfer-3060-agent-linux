@@ -1,0 +1,11 @@
+# 产物期污染门禁
+binary = /home/<user>/文档/deepseek-harness/default-workspace/bonsai2-ninfer-3060-agent-linux/.store/build/build-sm86/apps/ninfer-serve
+runpath = /home/<user>/文档/deepseek-harness/default-workspace/bonsai2-ninfer-3060-agent-linux/.store/toolchain/cuda-13.1/lib
+project_cuda = /home/<user>/文档/deepseek-harness/default-workspace/bonsai2-ninfer-3060-agent-linux/.store/toolchain/cuda-13.1
+verdict = PASS
+
+# 项目外解析的 CUDA 库（应为空；libcuda.so.1 属驱动白名单，单独列出）
+
+
+# libcuda.so.1（驱动加载器，允许来自系统）
+	libcuda.so.1 => /lib/x86_64-linux-gnu/libcuda.so.1 (0x0000769fa3a00000)
