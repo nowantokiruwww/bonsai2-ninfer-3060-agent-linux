@@ -173,6 +173,55 @@ else
   done <<< "$ips"
   chk "本机地址未写入公开文档（检查 $nips 个地址）" test "$ipfail" = 0
 fi
+# --- 5e. 证据与文档的交叉引用 -------------------------------------------
+# 起因：病历里写 "见 evidence/xxx"，但那个文件没进仓库 —— 读者点开是 404。
+# 这比缺功能更糟：它让"有证据"的声明变成装饰。
+log "[5e/7] 文档引用的证据文件真实存在"
+refs="$(cd "$ROOT" && grep -rhoE 'evidence/[A-Za-z0-9._-]+/[A-Za-z0-9._*-]+' \
+        docs README.md RELEASE-NOTES.md 2>/dev/null | sort -u || true)"
+nref=0; nmiss=0
+while IFS= read -r r; do
+  [ -n "$r" ] || continue
+  nref=$((nref+1))
+  if [ -e "$ROOT/$r" ]; then continue; fi
+  # 带 * 或以 - 结尾的是"前缀引用"（如 evidence/params/frontier-*），命中任意一个即可
+  case "$r" in
+    *'*'*) hit="$(find "$ROOT/${r%/*}" -maxdepth 4 -name "${r##*/}" 2>/dev/null | head -1)"
+           if [ -n "$hit" ]; then continue; fi ;;
+    *- )   hit="$(find "$ROOT/${r%/*}" -maxdepth 4 -name "${r##*/}*" 2>/dev/null | head -1)"
+           if [ -n "$hit" ]; then continue; fi ;;
+  esac
+  nmiss=$((nmiss+1))
+  printf '%s[FAIL]%s 文档引用 %s，但仓库里没有这个文件\n' "$C_R" "$C_0" "$r"
+done <<< "$refs"
+if [ "$nmiss" = 0 ]; then
+  ok "文档引用的 $nref 个证据文件全部存在"
+  npass=$((npass+1))
+else
+  FAIL=$((FAIL+1))
+fi
+echo
+
+# --- 5f. 文档引用的脚本真实存在 -----------------------------------------
+log "[5f/7] 文档引用的脚本真实存在"
+srefs="$(cd "$ROOT" && grep -rhoE '(scripts|agent)/[A-Za-z0-9._-]+\.(sh|py)' \
+        docs README.md RELEASE-NOTES.md 2>/dev/null | sort -u || true)"
+ns=0; nmiss=0
+while IFS= read -r s; do
+  [ -n "$s" ] || continue
+  ns=$((ns+1))
+  if [ -e "$ROOT/$s" ]; then continue; fi
+  nmiss=$((nmiss+1))
+  printf '%s[FAIL]%s 文档引用 %s，但仓库里没有这个文件\n' "$C_R" "$C_0" "$s"
+done <<< "$srefs"
+if [ "$nmiss" = 0 ]; then
+  ok "文档引用的 $ns 个脚本全部存在"
+  npass=$((npass+1))
+else
+  FAIL=$((FAIL+1))
+fi
+echo
+
 # --- 5d. README 隐私回归门禁 --------------------------------------------
 log "[5d/7] README 隐私标识"
 if grep -qE '(/(home|Users)/[A-Za-z0-9._-]+|GPU-[[:xdigit:]]{6,}-|gh[pousr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,}|AKIA[0-9A-Z]{16}|hf_[A-Za-z0-9]{20,}|[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}|(^|[^0-9.])(10(\.[0-9]{1,3}){3}|192\.168(\.[0-9]{1,3}){2}|172\.(1[6-9]|2[0-9]|3[01])(\.[0-9]{1,3}){2})([^0-9.]|$))' "$ROOT/README.md"; then

@@ -1,0 +1,50 @@
+{
+  "mode": "correctness",
+  "arms": {
+    "baseline": {
+      "P1_repeat": {
+        "md5": "d41d8cd98f00b204e9800998ecf8427e",
+        "tokens": 420,
+        "sec": 11.75,
+        "tok_s": 35.7,
+        "head": ""
+      },
+      "P2_normal": {
+        "md5": "948278663d9298203f6ad897e193a2dc",
+        "tokens": 326,
+        "sec": 8.93,
+        "tok_s": 36.5,
+        "head": "In a mixture-of-experts model, each token is routed to only a small subset of expert subnetworks, so only those experts’"
+      }
+    },
+    "dflash2_k7": {
+      "P1_repeat": {
+        "md5": "d41d8cd98f00b204e9800998ecf8427e",
+        "tokens": 420,
+        "sec": 4.64,
+        "tok_s": 90.6,
+        "head": ""
+      },
+      "P2_normal": {
+        "md5": "112d1a09c567a25e9502b1876425ed53",
+        "tokens": 273,
+        "sec": 3.91,
+        "tok_s": 69.8,
+        "head": "Mixture-of-experts models contain many expert subnetworks, but each input is routed to only a small subset of those expe"
+      }
+    }
+  },
+  "comparison": {
+    "P1_repeat": {
+      "identical": true,
+      "baseline": "d41d8cd98f00b204e9800998ecf8427e",
+      "spec": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "P2_normal": {
+      "identical": false,
+      "baseline": "948278663d9298203f6ad897e193a2dc",
+      "spec": "112d1a09c567a25e9502b1876425ed53"
+    }
+  },
+  "lossless": false
+}

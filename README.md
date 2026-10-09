@@ -514,7 +514,8 @@ bonsai2-ninfer-3060-agent-linux/
 │   ├── PRIVACY.md              证据里的身份信息怎么脱敏
 │   └── params/                 两份参数实测报告（原始数据与结论）
 │
-├── evidence/                   ★ 210 个原始日志/JSON —— 病历里每条结论的可点开验证
+├── evidence/                   ★ 215 个原始日志/JSON —— 病历里每条结论的可点开验证
+├── results/                    门禁与验收的结构化结果（KV 可行性、agent 四臂）
 ├── profiles/                   3060 的设备标定结果（ninfer-calibrate 产出）
 ├── patches/                    对引擎源码的改动：当前为空，README 说明为什么为空
 │
@@ -531,7 +532,7 @@ bonsai2-ninfer-3060-agent-linux/
 
 README 里的每个数字都有出处，不是"作者说快"：
 
-- **`evidence/`** —— 210 个原始命令输出与 JSON。`docs/PORTING-LEDGER.md` 里每条病历都指向
+- **`evidence/`** —— 215 个原始命令输出与 JSON。`docs/PORTING-LEDGER.md` 里每条病历都指向
   其中一个文件，点开就能验证。索引见 [`docs/EVIDENCE.md`](docs/EVIDENCE.md)。
 - **`config/env.sh` + `config/toolchain.lock` + `config/model.lock`** —— 每个外部输入
   （上游 commit、CUDA 组件版本与 sha256、模型 revision 与 sha256）都有声明和校验，不匹配即失败。
@@ -539,7 +540,7 @@ README 里的每个数字都有出处，不是"作者说快"：
   在 Linux 上构建所需的一切，见 `patches/README.md`。
 - **`scripts/build/`** —— 从 `00-baseline` 到 `99-auto-pipeline` 的完整流水线，
   每一步的产出写进 `evidence/`。编译配方见 [`docs/BUILD.md`](docs/BUILD.md)。
-- **`scripts/verify.sh`** —— 把"仓库自包含"当成断言来跑：126 项检查，包括
+- **`scripts/verify.sh`** —— 把"仓库自包含"当成断言来跑：128 项检查，包括
   禁止引用仓库外的绝对路径、禁止泄露身份标识、README 里出现的每个命令必须真实存在。
 
 ---
@@ -611,7 +612,7 @@ README 里的每个数字都有出处，不是"作者说快"：
 | [`docs/LINEAGE.md`](docs/LINEAGE.md) | 上游血缘：`Neroued/ninfer` → … → `iamwavecut/ninfer-all`，以及为什么必须换源码线 |
 | [`docs/METHODOLOGY.md`](docs/METHODOLOGY.md) | 方法论：去黑盒化、可重放、三道门禁 |
 | [`docs/BUILD.md`](docs/BUILD.md) | ★ 从零编译引擎的完整配方：工具链、cmake 命令、产物门禁、为什么 V100 编不出来 |
-| [`docs/EVIDENCE.md`](docs/EVIDENCE.md) | ★ 证据索引：病历里的每一条结论 → 哪个文件可以点开验证（210 个文件） |
+| [`docs/EVIDENCE.md`](docs/EVIDENCE.md) | ★ 证据索引：病历里的每一条结论 → 哪个文件可以点开验证（215 个文件） |
 | [`docs/PRIVACY.md`](docs/PRIVACY.md) | 证据文件里哪些信息被脱敏、为什么、以及怎么自己重新脱敏 |
 | [`docs/params/REPORT-param-audit-20261007.md`](docs/params/REPORT-param-audit-20261007.md) | 参数审计：六臂矩阵、探针、503 陷阱 |
 | [`docs/params/REPORT-tune-ab-20261007.md`](docs/params/REPORT-tune-ab-20261007.md) | 三臂 A/B：带宽地板的推算过程 |

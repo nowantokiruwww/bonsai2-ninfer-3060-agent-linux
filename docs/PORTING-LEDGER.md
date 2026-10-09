@@ -607,7 +607,7 @@ V100(llama.cpp-prism) 的参数，并**把 V100 的思考与采样参数照抄�
 - **刻意不动的控制臂**（保持 `--no-thinking --greedy`，见 L26 理由，**新增一处**）：
   `agent/agent_accept.py:46`、`agent/kvgate.py:35`、`agent/correctness_control.py:40`。
 - 探针提示文字更新为 L27 口径：`scripts/build/91-repeat-lock-probe.py:157-160` 与部署仓
-  `agent/91-repeat-lock-probe.py:157-160`。
+  `scripts/build/91-repeat-lock-probe.py:157-160`。
 
 ### 27.7 门禁回归与判读
 

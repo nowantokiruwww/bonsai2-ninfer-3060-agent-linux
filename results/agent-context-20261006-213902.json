@@ -1,0 +1,62 @@
+{
+  "mode": "context",
+  "ladder": [
+    8192,
+    16384,
+    24576,
+    32768,
+    49152
+  ],
+  "points": [
+    {
+      "ttft_sec": 8.561,
+      "total_sec": 8.603,
+      "prompt_tokens": 7730,
+      "completion_tokens": 2,
+      "decode_tok_s": 47.7,
+      "md5": "2b95d1f09b8b66c5c43622a4d9ec9a04",
+      "cached_tokens": 0,
+      "target_context": 8192
+    },
+    {
+      "ttft_sec": 17.691,
+      "total_sec": 17.735,
+      "prompt_tokens": 15442,
+      "completion_tokens": 2,
+      "decode_tok_s": 45.3,
+      "md5": "2b95d1f09b8b66c5c43622a4d9ec9a04",
+      "cached_tokens": 0,
+      "target_context": 16384
+    },
+    {
+      "ttft_sec": 27.691,
+      "total_sec": 27.736,
+      "prompt_tokens": 23154,
+      "completion_tokens": 2,
+      "decode_tok_s": 44.1,
+      "md5": "2b95d1f09b8b66c5c43622a4d9ec9a04",
+      "cached_tokens": 0,
+      "target_context": 24576
+    },
+    {
+      "ttft_sec": 38.428,
+      "total_sec": 38.476,
+      "prompt_tokens": 30866,
+      "completion_tokens": 2,
+      "decode_tok_s": 42.1,
+      "md5": "2b95d1f09b8b66c5c43622a4d9ec9a04",
+      "cached_tokens": 0,
+      "target_context": 32768
+    },
+    {
+      "ttft_sec": 62.369,
+      "total_sec": 62.42,
+      "prompt_tokens": 46290,
+      "completion_tokens": 2,
+      "decode_tok_s": 39.0,
+      "md5": "2b95d1f09b8b66c5c43622a4d9ec9a04",
+      "cached_tokens": 0,
+      "target_context": 49152
+    }
+  ]
+}

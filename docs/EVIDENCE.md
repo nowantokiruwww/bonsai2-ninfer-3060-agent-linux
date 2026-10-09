@@ -3,7 +3,7 @@
 `docs/PORTING-LEDGER.md` 里每一条病历都指向一个具体文件。这份索引把引用 → 文件对应起来，
 所以任何一条结论都能点开验证，而不是只有一句"我们试过"。
 
-**共 210 个文件，4.8 MB，全部纯文本/JSON。** 已脱敏：用户名、主机名、GPU UUID、本机绝对路径
+**共 215 个文件，4.9 MB，全部纯文本/JSON。** 已脱敏：用户名、主机名、GPU UUID、本机绝对路径
 （见 `docs/PRIVACY.md`）。
 
 ## 按阶段
@@ -22,6 +22,7 @@
 | `evidence/agent/` | 20 | A1–A8 验收、correctness control、lm-head-draft 探针 | L17, L19, L26 |
 | `evidence/params/` | 98 | 参数审计、前沿扫描、A/B 调参、request.jsonl | L27, L29 |
 | `evidence/deploy/` | 3 | systemd 部署报告、harness 集成、端到端 | L24, L30 |
+| `evidence/reports/` | 5 | 三份判定书与两份验收报告（V100 判定、3060 vs V100 参数对照、ModelScope 验收） | L01, L11, L27 |
 
 ## 病历 → 证据（抽查）
 
