@@ -542,7 +542,7 @@ README 里的每个数字都有出处，不是"作者说快"：
   在 Linux 上构建所需的一切，见 `patches/README.md`。
 - **`scripts/build/`** —— 从 `00-baseline` 到 `99-auto-pipeline` 的完整流水线，
   每一步的产出写进 `evidence/`。编译配方见 [`docs/BUILD.md`](docs/BUILD.md)。
-- **`scripts/verify.sh`** —— 把"仓库自包含"当成断言来跑：128 项检查，包括
+- **`scripts/verify.sh`** —— 把"仓库自包含"当成断言来跑：130 项检查，包括
   禁止引用仓库外的绝对路径、禁止泄露身份标识、README 里出现的每个命令必须真实存在。
 
 ---

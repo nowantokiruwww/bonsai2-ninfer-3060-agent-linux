@@ -80,7 +80,7 @@ cd bonsai2-ninfer-3060-agent-linux
 | 想知道什么 | 看哪 |
 |---|---|
 | 这东西怎么来的、为什么是这条源码线 | `docs/LINEAGE.md` |
-| 移植过程中踩的 30 条坑（含复现与修法） | `docs/PORTING-LEDGER.md` |
+| 移植过程中踩的 31 条坑（含复现与修法） | `docs/PORTING-LEDGER.md` |
 | 每个参数干什么、怎么调 | `docs/PARAMETERS.md` |
 | 怎么用 Docker 跑 | `docs/DOCKER.md` |
 | agent 实测体验（A1–A8） | `docs/AGENT-EXPERIENCE.md` |

@@ -31,7 +31,7 @@ echo "================================================================"
 echo
 
 # --- 1. 关键文件存在 -----------------------------------------------------
-log "[1/7] 关键文件"
+log "[1/8] 关键文件"
 for f in README.md LICENSE NOTICE VERSION \
          app/env.sh app/presets.env app/launcher.sh \
          webui/server.py webui/static/index.html webui/static/app.js webui/static/style.css \
@@ -44,21 +44,21 @@ done
 echo
 
 # --- 2. shell 语法 -------------------------------------------------------
-log "[2/7] shell 语法"
+log "[2/8] shell 语法"
 while IFS= read -r s; do
   chk "语法 ${s#"$ROOT"/}" bash -n "$s"
 done < <(find "$ROOT" -name '*.sh' -not -path '*/.git/*' -not -path '*/.cache/*' | sort)
 echo
 
 # --- 3. python 语法（compile() 不生成 __pycache__）-----------------------
-log "[3/7] python 语法"
+log "[3/8] python 语法"
 while IFS= read -r s; do
   chk "语法 ${s#"$ROOT"/}" python3 -c 'import pathlib,sys; p=pathlib.Path(sys.argv[1]); compile(p.read_bytes(), str(p), "exec")' "$s"
 done < <(find "$ROOT" -name '*.py' -not -path '*/.git/*' -not -path '*/__pycache__/*' | sort)
 echo
 
 # --- 4. 可执行位 ---------------------------------------------------------
-log "[4/7] 可执行位"
+log "[4/8] 可执行位"
 for f in install.sh start.sh stop.sh restart.sh status.sh logs.sh presets.sh check.sh webui.sh \
          app/launcher.sh scripts/fetch-runtime.sh scripts/fetch-model.sh \
          scripts/install-service.sh scripts/verify.sh scripts/make-release.sh \
@@ -78,7 +78,7 @@ echo
 # 哪台机器的哪个路径上测到的什么数字。删掉这些路径等于篡改证据，所以显式豁免。
 # 纪律只约束「别人会照着敲」的东西：README、install.sh、app/、scripts/、webui/、
 # config/、tests/。
-log "[5/7] 仓库外路径引用（核心纪律）"
+log "[5/8] 仓库外路径引用（核心纪律）"
 SELF="$(basename "${BASH_SOURCE[0]}")"
 raw="$( (cd "$ROOT" && grep -rnE '(^|[^A-Za-z0-9_])/(home|Users)/[A-Za-z0-9._-]+|~/bonsai|[$]HOME/bonsai|bonsai2-ninfer-3060-agent-linux[.]retired' \
         . \
@@ -119,7 +119,7 @@ echo
 #   app/presets.env 的 balanced 档（网页控制台点"balanced"时用）
 #   以及 docs/AGENT-EXPERIENCE.md §13.2 那段自称"最终配置"的代码块
 # 四处取值不同就是在制造"文档说 A、脚本做 B"的静默漂移。
-log "[5b/7] 生产档参数一致性"
+log "[5b/8] 生产档参数一致性"
 budget_of() { grep -oE -- '--default-thinking-budget [0-9]+' "$1" 2>/dev/null | awk '{print $2}' | sort -u | head -1; }
 b_install="$(budget_of "$ROOT/install.sh")"
 b_docker="$(budget_of "$ROOT/docker/entrypoint.sh")"
@@ -149,7 +149,7 @@ echo
 
 # --- 5c. 本机自己的 IP 不许出现在文档里 --------------------------------
 # 文档示例使用 RFC 5737 TEST-NET 地址；真实地址不应进入仓库或可分享输出。
-log "[5c/7] 本机 IP 没有写进公开文档"
+log "[5c/8] 本机 IP 没有写进公开文档"
 # shellcheck source=../app/env.sh
 if ( . "$ROOT/app/env.sh" 2>/dev/null && declare -F lan_ips >/dev/null ); then
   ips="$( (. "$ROOT/app/env.sh"; lan_ips) 2>/dev/null | awk '{print $NF}' | grep -vE '^$' || true )"
@@ -173,10 +173,21 @@ else
   done <<< "$ips"
   chk "本机地址未写入公开文档（检查 $nips 个地址）" test "$ipfail" = 0
 fi
+# --- 5d. README 隐私回归门禁 --------------------------------------------
+log "[5d/8] README 隐私标识"
+if grep -qE '(/(home|Users)/[A-Za-z0-9._-]+|GPU-[[:xdigit:]]{6,}-|gh[pousr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,}|AKIA[0-9A-Z]{16}|hf_[A-Za-z0-9]{20,}|[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}|(^|[^0-9.])(10(\.[0-9]{1,3}){3}|192\.168(\.[0-9]{1,3}){2}|172\.(1[6-9]|2[0-9]|3[01])(\.[0-9]{1,3}){2})([^0-9.]|$))' "$ROOT/README.md"; then
+  printf '%s[FAIL]%s README 包含疑似隐私标识（内容已隐藏）\n' "$C_R" "$C_0"
+  FAIL=$((FAIL+1))
+else
+  ok "README 未发现密钥形态、邮箱、个人路径、GPU UUID 或私有 IPv4"
+  npass=$((npass+1))
+fi
+echo
+
 # --- 5e. 证据与文档的交叉引用 -------------------------------------------
 # 起因：病历里写 "见 evidence/xxx"，但那个文件没进仓库 —— 读者点开是 404。
 # 这比缺功能更糟：它让"有证据"的声明变成装饰。
-log "[5e/7] 文档引用的证据文件真实存在"
+log "[5e/8] 文档引用的证据文件真实存在"
 refs="$(cd "$ROOT" && grep -rhoE '(evidence|results)/[A-Za-z0-9._-]+/[A-Za-z0-9._*-]+|(evidence|results)/[A-Za-z0-9._-]+' \
         docs README.md RELEASE-NOTES.md 2>/dev/null | sort -u || true)"
 nref=0; nmiss=0
@@ -203,7 +214,7 @@ fi
 echo
 
 # --- 5f. 文档引用的脚本真实存在 -----------------------------------------
-log "[5f/7] 文档引用的脚本真实存在"
+log "[5f/8] 文档引用的脚本真实存在"
 srefs="$(cd "$ROOT" && grep -rhoE '(scripts|agent)/[A-Za-z0-9._-]+\.(sh|py)' \
         docs README.md RELEASE-NOTES.md 2>/dev/null | sort -u || true)"
 ns=0; nmiss=0
@@ -225,7 +236,7 @@ echo
 # --- 5g. 文档内部链接可达 ---------------------------------------------------
 # 起因：AGENT-EXPERIENCE.md 里有一条指向 evidence/params/REPORT-… 的链接，
 # 那份报告实际在 docs/params/ —— 读者点开是 404。链接坏掉不会报错，只会静默失效。
-log "[5g/7] 文档里的相对链接全部可达"
+log "[5g/8] 文档里的相对链接全部可达"
 nlink=0; nbad=0
 for src in README.md RELEASE-NOTES.md docs/*.md docs/params/*.md scripts/build/README.md patches/README.md; do
   [ -e "$ROOT/$src" ] || continue
@@ -248,19 +259,8 @@ else
 fi
 echo
 
-# --- 5d. README 隐私回归门禁 --------------------------------------------
-log "[5d/7] README 隐私标识"
-if grep -qE '(/(home|Users)/[A-Za-z0-9._-]+|GPU-[[:xdigit:]]{6,}-|gh[pousr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,}|AKIA[0-9A-Z]{16}|hf_[A-Za-z0-9]{20,}|[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}|(^|[^0-9.])(10(\.[0-9]{1,3}){3}|192\.168(\.[0-9]{1,3}){2}|172\.(1[6-9]|2[0-9]|3[01])(\.[0-9]{1,3}){2})([^0-9.]|$))' "$ROOT/README.md"; then
-  printf '%s[FAIL]%s README 包含疑似隐私标识（内容已隐藏）\n' "$C_R" "$C_0"
-  FAIL=$((FAIL+1))
-else
-  ok "README 未发现密钥形态、邮箱、个人路径、GPU UUID 或私有 IPv4"
-  npass=$((npass+1))
-fi
-echo
-
 # --- 6. README 里出现的命令，脚本都存在 --------------------------------
-log "[6/7] README 命令可解析"
+log "[6/8] README 命令可解析"
 cmds="$(grep -oE '\./[A-Za-z0-9_.-]+(/[A-Za-z0-9_.-]+)?\.sh' "$ROOT/README.md" 2>/dev/null | sort -u || true)"
 if [ -z "$cmds" ]; then
   warn "  README 里没有解析到 ./*.sh 形式的命令"
@@ -273,7 +273,7 @@ fi
 echo
 
 # --- 7. 运行载荷是否就位（可选，缺失只警告不算失败）---------------------
-log "[7/7] 运行载荷（缺失不算错误，只是还不能启动）"
+log "[7/8] 运行载荷（缺失不算错误，只是还不能启动）"
 if [ -x "$ROOT/runtime/bin/ninfer-serve" ]; then
   ok "runtime/bin/ninfer-serve 存在"
   s="$(sha256_of "$ROOT/runtime/bin/ninfer-serve")"
@@ -289,6 +289,24 @@ if [ -f "$ROOT/models/Ternary-Bonsai-2-27B-ninfer-v3.ninfer" ]; then
   ok "模型文件存在（$(human_size "$(stat -c %s "$ROOT/models/Ternary-Bonsai-2-27B-ninfer-v3.ninfer")")）"
 else
   warn "  models/ 未就位 → 跑 ./scripts/fetch-model.sh"
+fi
+echo
+
+# --- 8. 声称的数字必须等于实际跑出来的数字 --------------------------------
+# 起因：README 写"128 项检查"，实际跑出来 129 —— 数字漂移本身不致命，
+# 但它让"有门禁"这句话变成装饰。所以把声称的数字钉成断言。
+# 本门禁自己也算一项，所以比较的是 npass+1。
+log "[8/8] 文档声称的检查项数与实际一致"
+claimed="$(grep -oE '[0-9]+ 项(检查|全 PASS)' README.md docs/PUBLISH.md 2>/dev/null \
+          | grep -oE '[0-9]+' | sort -u | head -1)"
+if [ -z "$claimed" ]; then
+  warn "  没解析到 README 里声称的项数（措辞变了？）"
+elif [ "$claimed" = "$((npass + 1))" ]; then
+  ok "文档声称 $claimed 项，实际通过 $((npass + 1)) 项（含本条）"
+  npass=$((npass + 1))
+else
+  printf '%s[FAIL]%s 文档声称 %s 项，实际通过 %s 项 —— 数字漂移\n' "$C_R" "$C_0" "$claimed" "$((npass + 1))"
+  FAIL=$((FAIL + 1))
 fi
 echo
 
