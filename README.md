@@ -521,6 +521,7 @@ bonsai2-ninfer-3060-agent-linux/
 ├── results/                    门禁与验收的结构化结果（KV 可行性、agent 四臂）
 ├── profiles/                   3060 的设备标定结果（ninfer-calibrate 产出）
 ├── patches/                    对引擎源码的改动：当前为空，README 说明为什么为空
+├── tests/                      端到端冒烟测试（真起引擎、真发请求）
 │
 ├── runtime/                    ← 安装后出现：引擎载荷（bin/ lib/ agent/ profiles/）
 ├── models/                     ← 安装后出现：模型权重
@@ -543,7 +544,7 @@ README 里的每个数字都有出处，不是"作者说快"：
   在 Linux 上构建所需的一切，见 `patches/README.md`。
 - **`scripts/build/`** —— 从 `00-baseline` 到 `99-auto-pipeline` 的完整流水线，
   每一步的产出写进 `evidence/`。编译配方见 [`docs/BUILD.md`](docs/BUILD.md)。
-- **`scripts/verify.sh`** —— 把"仓库自包含"当成断言来跑：133 项检查，包括
+- **`scripts/verify.sh`** —— 把"仓库自包含"当成断言来跑：134 项检查，包括
   禁止引用仓库外的绝对路径、禁止泄露身份标识、README 里出现的每个命令必须真实存在。
 
 ---

@@ -321,6 +321,26 @@ else
 fi
 echo
 
+# --- 5k. 仓库结构图与真实目录一致 -------------------------------------------
+# 起因：README 的结构图是读者找文件的地图。地图漏一个目录，那个目录就等于不存在
+# （tests/ 曾经不在图上，虽然它里有端到端冒烟测试）。
+log "[5k/8] README 的结构图覆盖所有顶层目录"
+ntree=0; nmiss=0
+while IFS= read -r d; do
+  [ -n "$d" ] || continue
+  case "$d" in runtime|models|logs) continue ;; esac   # 安装后才出现，图上另有标注
+  ntree=$((ntree+1))
+  if grep -qE "├── ${d}/|└── ${d}/" "$ROOT/README.md"; then continue; fi
+  printf '%s[FAIL]%s 目录 %s/ 存在，但 README 的结构图里没有\n' "$C_R" "$C_0" "$d"; nmiss=$((nmiss+1))
+done < <(cd "$ROOT" && git ls-files | grep / | cut -d/ -f1 | sort -u)
+if [ "$nmiss" = 0 ]; then
+  ok "结构图覆盖 $ntree 个顶层目录"
+  npass=$((npass+1))
+else
+  FAIL=$((FAIL+1))
+fi
+echo
+
 # --- 6. README 里出现的命令，脚本都存在 --------------------------------
 log "[6/8] README 命令可解析"
 cmds="$(grep -oE '\./[A-Za-z0-9_.-]+(/[A-Za-z0-9_.-]+)?\.sh' "$ROOT/README.md" 2>/dev/null | sort -u || true)"

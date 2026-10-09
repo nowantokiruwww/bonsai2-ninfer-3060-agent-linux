@@ -44,8 +44,10 @@ RTX 3060 上跑的那条流水线。它存在的意义只有一个：**让 `docs
 这些脚本假设你**从零开始**，且有一张 sm_86 卡。它们不需要 sudo，也不碰 `/usr/local/cuda`：
 工具链全部下载进 `.store/toolchain/cuda-13.1/`（可用 `BSTORE` 环境变量换盘）。
 
+`config/env.sh` 已经在仓库里，不用改就能跑（它只声明路径和上游 commit，不含本机身份）。
+要换存放盘，导出 `BSTORE=/path/to/store`。
+
 ```bash
-cp config/env.sh.example config/env.sh   # 若不存在则直接用 config/env.sh
 bash scripts/build/00-baseline.sh
 bash scripts/build/20-cuda-fetch.sh
 bash scripts/build/30-deps.sh
