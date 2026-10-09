@@ -512,6 +512,7 @@ bonsai2-ninfer-3060-agent-linux/
 │   ├── BUILD.md                ★ 从零编译引擎的完整配方
 │   ├── EVIDENCE.md             ★ 证据索引：每条结论对应哪个文件
 │   ├── PRIVACY.md              证据里的身份信息怎么脱敏
+│   └── PUBLISH.md              发布门禁：12 条必须全为真才发 Release
 │   └── params/                 两份参数实测报告（原始数据与结论）
 │
 ├── evidence/                   ★ 215 个原始日志/JSON —— 病历里每条结论的可点开验证
@@ -614,6 +615,7 @@ README 里的每个数字都有出处，不是"作者说快"：
 | [`docs/BUILD.md`](docs/BUILD.md) | ★ 从零编译引擎的完整配方：工具链、cmake 命令、产物门禁、为什么 V100 编不出来 |
 | [`docs/EVIDENCE.md`](docs/EVIDENCE.md) | ★ 证据索引：病历里的每一条结论 → 哪个文件可以点开验证（215 个文件） |
 | [`docs/PRIVACY.md`](docs/PRIVACY.md) | 证据文件里哪些信息被脱敏、为什么、以及怎么自己重新脱敏 |
+| [`docs/PUBLISH.md`](docs/PUBLISH.md) | 发布门禁：这个 Release 是怎么被证明可用的（12 条，每条都来自一次真实事故） |
 | [`docs/params/REPORT-param-audit-20261007.md`](docs/params/REPORT-param-audit-20261007.md) | 参数审计：六臂矩阵、探针、503 陷阱 |
 | [`docs/params/REPORT-tune-ab-20261007.md`](docs/params/REPORT-tune-ab-20261007.md) | 三臂 A/B：带宽地板的推算过程 |
 

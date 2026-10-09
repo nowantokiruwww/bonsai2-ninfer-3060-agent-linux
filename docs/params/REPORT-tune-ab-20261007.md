@@ -74,7 +74,7 @@ CUDA_CHECK(cudaGetLastError()) failed: cudaErrorNoKernelImageForDevice
 
 修法：显式 `export CUDA_VISIBLE_DEVICES / CUDA_DEVICE_ORDER=PCI_BUS_ID / NINFER_DEVICE_PROFILES / LD_LIBRARY_PATH`，
 并在 `CUDA_VISIBLE_DEVICES` 不以 `GPU-` 开头时**拒绝启动**。
-`package/runtime-tools.sh` 一直是 export 的 —— **复制启动逻辑时要把 export 一起复制。**
+上一代工程的 `package/runtime-tools.sh` 一直是 export 的 —— **复制启动逻辑时要把 export 一起复制。**
 
 ## 5. 复跑方法
 

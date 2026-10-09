@@ -177,7 +177,7 @@ fi
 # 起因：病历里写 "见 evidence/xxx"，但那个文件没进仓库 —— 读者点开是 404。
 # 这比缺功能更糟：它让"有证据"的声明变成装饰。
 log "[5e/7] 文档引用的证据文件真实存在"
-refs="$(cd "$ROOT" && grep -rhoE 'evidence/[A-Za-z0-9._-]+/[A-Za-z0-9._*-]+' \
+refs="$(cd "$ROOT" && grep -rhoE '(evidence|results)/[A-Za-z0-9._-]+/[A-Za-z0-9._*-]+|(evidence|results)/[A-Za-z0-9._-]+' \
         docs README.md RELEASE-NOTES.md 2>/dev/null | sort -u || true)"
 nref=0; nmiss=0
 while IFS= read -r r; do

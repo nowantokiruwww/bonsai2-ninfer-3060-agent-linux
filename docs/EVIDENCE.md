@@ -23,6 +23,7 @@
 | `evidence/params/` | 98 | 参数审计、前沿扫描、A/B 调参、request.jsonl | L27, L29 |
 | `evidence/deploy/` | 3 | systemd 部署报告、harness 集成、端到端 | L24, L30 |
 | `evidence/reports/` | 5 | 三份判定书与两份验收报告（V100 判定、3060 vs V100 参数对照、ModelScope 验收） | L01, L11, L27 |
+| `evidence/MANIFEST.md` | 1 | 输入/产物身份表（主机、commit、哈希） | — |
 
 ## 病历 → 证据（抽查）
 
@@ -49,4 +50,4 @@
 ## 复现
 
 跑 `scripts/build/` 里的流水线会重新生成同名证据（时间戳不同）。
-配方见 [`docs/BUILD.md`](BUILD.md)。
+配方见 [`docs/BUILD.md`](BUILD.md)，发布前的门禁见 [`docs/PUBLISH.md`](PUBLISH.md)。

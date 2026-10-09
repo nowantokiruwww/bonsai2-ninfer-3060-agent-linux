@@ -270,7 +270,7 @@
 - **通用教训**：**A/B 测试里"公共配置"漏一项，就会把配置差异伪装成被测对象的差异**；
   而且**空输出的 MD5 相等**这种"假一致"极具欺骗性——判等前应先断言输出非空
   （本项目已在控制实验里显式记录 `chars`，避免再看走眼）。
-- **证据**：`results/agent-correctness-20261006-213627.json`（坏）vs `agent-correctness-20261006-215313.json`（修好后）、`evidence/agent/control/`。
+- **证据**：修好后 `results/agent-correctness-20261006-215313.json`；坏的那次（`…-213627.json`）是本机历史文件，未发布 —— 它的痕迹留在 `evidence/agent/agent-correctness-console.log` 里（两臂 `P1_repeat` 的 MD5 都是空串哈希 `d41d8cd98f00…`，即空洞的一致）。
 - **是否 Linux 特有**：否。
 
 ## L19 `--lm-head-draft` 解析通过但**启动失败**，且引擎不给原因
@@ -601,8 +601,8 @@ V100(llama.cpp-prism) 的参数，并**把 V100 的思考与采样参数照抄�
   `defaultMaxTokens` `8192 → 16384`（`contextWindow` 保持 49152）；备份
   `cordis.patch.yml.bak-20261007-145319-v100-align`。**需 DSH 重启 / 新会话才生效。**
 - **生产默认值同步 9 文件 / 10 处**（旧串 → 新串），全部 `.bak-<ts>-v100-align`：
-  - 工程仓：`config/env.sh:104`、`package/runtime-tools.sh:99`、`package/entrypoint.sh:15,26`、
-    `package/install-runtime.sh:81`、`scripts/build/80-serve.sh:51`、`scripts/build/97-deploy-service.sh:190`
+  - 工程仓：`config/env.sh:104`、上一代工程的 `package/runtime-tools.sh:99`（本仓库对应 `app/launcher.sh`）、上一代工程的 `package/entrypoint.sh:15,26`（本仓库对应 `docker/entrypoint.sh`）、
+    上一代工程的 `package/install-runtime.sh:81`（本仓库对应 `install.sh`）、`scripts/build/80-serve.sh:51`、`scripts/build/97-deploy-service.sh:190`
   - 部署仓：`config/env.sh:104`、`runtime-tools.sh:99`、`install-runtime.sh:81`
 - **刻意不动的控制臂**（保持 `--no-thinking --greedy`，见 L26 理由，**新增一处**）：
   `agent/agent_accept.py:46`、`agent/kvgate.py:35`、`agent/correctness_control.py:40`。
@@ -824,7 +824,7 @@ DSH 发 `max_tokens=16384` 所以碰不到，但任何"小 max_tokens + 思考�
 `profiles/device-profiles.json` 事后校验 sha256 与冻结基线一致、未被写脏。
 现在脚本显式 `export CUDA_VISIBLE_DEVICES / CUDA_DEVICE_ORDER=PCI_BUS_ID / NINFER_DEVICE_PROFILES / LD_LIBRARY_PATH`，
 并且在 `CUDA_VISIBLE_DEVICES` **不以 `GPU-` 开头时拒绝启动**（宁可起不来，也不要跑到别的卡上）。
-`package/runtime-tools.sh` 一直是 export 的，只有新写的调参器漏了 —— **复制启动逻辑时要连 export 一起复制。**
+上一代工程的 `package/runtime-tools.sh` 一直是 export 的，只有新写的调参器漏了 —— **复制启动逻辑时要连 export 一起复制。**
 
 **回滚**：无参数改动，本条只记录测量结论。复跑：`scripts/build/96-tune-serve.sh（`tune.sh` 的源码；载荷包里的 `./tune.sh` 是同一脚本的运行时副本） fast|balanced`，
 产出的 `logs/request.jsonl` 用 `scripts/build/92-thinking-throughput.py` 或
@@ -841,7 +841,7 @@ DSH 发 `max_tokens=16384` 所以碰不到，但任何"小 max_tokens + 思考�
    `(dry-run) …`，看起来完全无害。但**3060 上正在跑的 ninfer 服务被停掉了**：
    `systemctl --user is-active` 变 `inactive`、`/v1/models` 变 `http=000`。
 2. 顺带发现参数有 **3 处兜底值仍写着旧的 `4096`**：
-   `config/env.sh:104`、`scripts/build/80-serve.sh:51`、`package/entrypoint.sh:15,26`。
+   `config/env.sh:104`、`scripts/build/80-serve.sh:51`、上一代工程的 `package/entrypoint.sh:15,26`（本仓库对应 `docker/entrypoint.sh`）。
    它们在 L28 把生产档定成 `--default-thinking-budget 1024` 时被漏掉，
    而且**已经漏进发布物**（`dist/0.1.0/runtime/config/env.sh`、
    `dist/0.1.0/porting/scripts/build/80-serve.sh` 都带着 4096）。
@@ -853,7 +853,7 @@ DSH 发 `max_tokens=16384` 所以碰不到，但任何"小 max_tokens + 思考�
    却在第 0 步做了**最重的副作用**——停服务。实测代价：服务中断，
    需要重新 `systemctl --user start` 并等 28 s 就绪。
 2. 参数在 6 个文件里各有一份默认值（`config/env.sh`、`scripts/build/80-serve.sh`、
-   `package/runtime-tools.sh`、`package/install-runtime.sh`、`package/entrypoint.sh`、
+   上一代工程的 `package/runtime-tools.sh`、上一代工程的 `package/install-runtime.sh`、上一代工程的 `package/entrypoint.sh`、
    `scripts/build/97-deploy-service.sh` 的生成模板）。**它们之间没有任何自动一致性检查**，
    改一处必须靠人肉记全 —— 实际就漏了 3 处。
 
